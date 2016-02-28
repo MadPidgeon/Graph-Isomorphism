@@ -1,0 +1,107 @@
+#pragma once
+#include <iostream>
+#include <vector>
+#include <initializer_list>
+#include <stdexcept>
+
+template<typename T>
+class matrix {
+	int w, h;
+	std::vector<T> data;
+public:
+	int width() const;
+	int height() const;
+	typename std::vector<T>::reference at( int row, int column );
+	typename std::vector<T>::const_reference at( int row, int column ) const;
+	void resize( int height, int width );
+	void print( std::ostream& os ) const;
+	void clear();
+	matrix();
+	matrix( int width, int height );
+	matrix( std::initializer_list<std::initializer_list<T>> list );
+	~matrix();
+};
+
+template<typename T> 
+int matrix<T>::width() const {
+	return w;
+}
+
+template<typename T> 
+int matrix<T>::height() const {
+	return h;
+}
+
+template<typename T> 
+typename std::vector<T>::reference matrix<T>::at( int row, int column ) {
+	return data[ row*width() + column ];
+}
+
+template<typename T> 
+typename std::vector<T>::const_reference matrix<T>::at( int row, int column ) const {
+	return data[ row*width() + column ];
+}
+
+template<typename T> 
+void matrix<T>::resize( int height, int width ) {
+	h = height;
+	w = width;
+	clear();
+}
+
+template<typename T> 
+void matrix<T>::print( std::ostream& os ) const {
+	for( int i = 0; i < height(); i++ ) {
+		if( i != 0 )
+			os << std::endl;
+		for( int j = 0; j < width(); j++ )
+			os << at(i,j) << " ";
+	}
+}
+
+template<typename T> 
+void matrix<T>::clear() {
+	data.assign( w*h, 0 );
+}
+
+template<typename T> 
+matrix<T>::matrix() {
+	w = h = 0;
+}
+
+template<typename T> 
+matrix<T>::matrix( int height, int width ) {
+	resize( height, width );
+}
+
+template<typename T> 
+matrix<T>::matrix( std::initializer_list<std::initializer_list<T>> list ) {
+	h = list.size();
+	if( h == 0 ) {
+		w = 0;
+		resize( 0, 0 );
+		return;
+	}
+	w = list.begin()->size();
+	for( auto& row : list ) {
+		if( w != row.size() )
+			throw std::out_of_range( "Irregular matrix width" );
+	}
+	resize( h, w );
+	int i = 0;
+	for( auto& row : list ) {
+		int j = 0;
+		for( auto& element : row )
+			at( i, j++ ) = element;
+		i++;	
+	}
+}
+
+template<typename T>
+matrix<T>::~matrix() { }
+
+template<typename T>
+std::ostream& operator<<( std::ostream& os, const matrix<T>& M ) {
+	M.print( os );
+	return os;
+}
