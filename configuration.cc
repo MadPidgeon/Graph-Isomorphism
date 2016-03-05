@@ -330,21 +330,21 @@ Either<ColoredPartition,RelationalStructure> splitOrUPCC( const RelationalStruct
 	throw;
 }
 
-Either<ColoredPartition,JohnsonScheme> bipartiteSplitOrJohnson( const BipartiteGraph& X, double alpha, int C0 ) {
-	int n = X.domainSize();
+Either<ColoredPartition,JohnsonScheme> bipartiteSplitOrJohnson( const BipartiteGraph& G, double alpha, int C0 ) {
+	int n = G.domainSize();
 	int n1 = 0, n2 = 0;
 	for( int i = 0; i < n; i++ )
-		if( X.vertex( i ) == 0 )
+		if( G.vertex( i ) == 0 )
 			n1++;
 	n2 = n - n1;
 	// 1.
 	if( n1 <= C0 ) {
-		ColoredPartition cp( X.coloring() );
+		ColoredPartition cp( G.coloring() );
 		int c = 0;
 		int i = 0;
 		int b = (1-alpha) * n1;
 		while( c < b and i < n ) {
-			if( X.vertex( i ) == 0 ) {
+			if( G.vertex( i ) == 0 ) {
 				cp.individualize( i );
 				c++;
 			}
@@ -355,7 +355,18 @@ Either<ColoredPartition,JohnsonScheme> bipartiteSplitOrJohnson( const BipartiteG
 	// 2.
 	if( n2 <= n1 ) {
 		#warning "Split or Johnson requires quasipolynomial funtion"
-		
-
+		for( auto& perm : all_permutations( n2 ) ) {
+			// individualize
+			// apply vertex refinement
+			// recurse
+		}
+		return;
 	}
+	// 3.
+	RelationalStructure X( G );
+	X.WeisfellerLeman();
+	RelationalStructure X1 = X.skeletalSubstructure( 2, V1 );
+	RelationalStructure X2 = X.skeletalSubstructure( 2, V2 );
+	// 4.
+	
 }

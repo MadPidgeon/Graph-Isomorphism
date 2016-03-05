@@ -79,16 +79,29 @@ int main() {
 			vector<int>({0,0}),vector<int>({1,1}),vector<int>({2,2}),vector<int>({3,3})
 		}),
 		set<vector<int>>({
-			vector<int>({0,1}),vector<int>({2,3})
-		}),
-		set<vector<int>>({
-			vector<int>({1,0}),vector<int>({3,2})
+			vector<int>({0,1}),vector<int>({2,3}),vector<int>({1,0}),vector<int>({3,2})
 		}),
 		set<vector<int>>({
 			vector<int>({0,2}),vector<int>({0,3}),vector<int>({1,2}),vector<int>({1,3}),
 			vector<int>({2,0}),vector<int>({3,0}),vector<int>({2,1}),vector<int>({3,1})
 		})
 	}), 4 );
+	RelationalStructure conf4( vector<set<vector<int>>>({
+		set<vector<int>>({
+			vector<int>({0,0}),vector<int>({1,1}),vector<int>({2,2}),vector<int>({3,3})
+		}),
+		set<vector<int>>({
+			vector<int>({0,1}),vector<int>({1,0})
+		}),
+		set<vector<int>>({
+			vector<int>({2,0}),vector<int>({0,2}),vector<int>({1,2}),vector<int>({2,1}),
+		}),
+		set<vector<int>>({
+			vector<int>({0,3}),vector<int>({3,2}),vector<int>({1,3}),
+			vector<int>({3,0}),vector<int>({2,3}),vector<int>({3,1})
+		})
+	}), 4 );
+
 
 	conf1.WeisfellerLeman();
 	std::cout << conf1.relations() << std::endl;
@@ -98,6 +111,9 @@ int main() {
 	std::cout << "------------------------------" << std::endl;
 	conf3.WeisfellerLeman();
 	std::cout << conf3.relations() << std::endl;
+	std::cout << "------------------------------" << std::endl;
+	conf4.WeisfellerLeman();
+	std::cout << conf4.relations() << std::endl;
 	std::cout << "------------------------------" << std::endl;
 	Graph G1( 7 );
 	std::vector<std::vector<int>> edges1( {{0,3},{0,4},{0,5},{1,4},{1,5},{1,6},{2,5},{2,6},{3,4},{3,6},{4,6},{5,6}} );

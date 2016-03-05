@@ -17,6 +17,9 @@ luks: lib luks.o
 configuration: lib configuration_test.o configuration.o
 	$(CC) permutation.o group.o action.o unionfind.o coset.o ext.o configuration.o configuration_test.o -o configuration
 
+bruteforce: lib bruteforce_test.o bruteforce.o
+	$(CC) permutation.o group.o action.o unionfind.o coset.o ext.o bruteforce.o bruteforce_test.o -o bruteforce
+
 lib: group.o permutation.o action.o unionfind.o coset.o ext.o
 
 luks.o: luks.cc
@@ -42,6 +45,13 @@ main.o: main.cc
 
 ext.o: ext.cc
 	$(CC) $(CFLAGS) ext.cc
+
+bruteforce.o: bruteforce.cc
+	$(CC) $(CFLAGS) bruteforce.cc
+
+bruteforce_test.o: bruteforce_test.cc
+	$(CC) $(CFLAGS) bruteforce_test.cc
+
 
 configuration.o: configuration.cc
 	$(CC) $(CFLAGS) configuration.cc

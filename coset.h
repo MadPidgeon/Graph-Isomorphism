@@ -21,3 +21,5 @@ public:
 };
 
 std::ostream& operator<<( std::ostream& os, const Coset& c );
+
+typedef Either<Coset,Empty> Iso;
