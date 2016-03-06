@@ -13,6 +13,7 @@ public:
 	int degree() const;
 	int order() const;
 	bool isIdentity() const;
+	const std::vector<int>& getArrayNotation() const;
 	std::vector<std::vector<int>> getCycleNotation() const;
 
 	bool operator<( const Permutation& ) const;

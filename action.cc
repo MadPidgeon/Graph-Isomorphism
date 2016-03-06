@@ -14,6 +14,6 @@ Action<int> NaturalAction( Group G ) {
 	return SubsetAction( G, G->domain() );
 }
 
-Action<matrix<int>> MatrixAction( Group G ) {
+/*Action<matrix<int>> MatrixAction( Group G ) {
 	throw;
-}
+}*/

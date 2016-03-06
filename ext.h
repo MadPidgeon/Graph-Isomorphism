@@ -217,3 +217,7 @@ std::vector<int> rank( const T& data ) {
 	auto indexing = index_sort( data );
 	return inverse_mapping( indexing );
 }
+
+template<typename T> bool size_compare( const T& lhs, const T& rhs ) {
+	return lhs.size() < rhs.size();
+}

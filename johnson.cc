@@ -1,5 +1,10 @@
+#include <vector>
+#include <set>
+#include <map>
+
 #include "group.h"
 #include "action.h"
+#include "ext.h"
 
 std::set<int> JordanLiebeckSet( Action<std::set<int>> phi, int x ) {
 	Group Gx = phi.group().stabilizer(x);

@@ -104,6 +104,40 @@ Iso StringIsomorphism( Group G, const std::string& x, const std::string& y ) {
 	return WeakReduction( B, x, y );
 }
 
+Iso TrivialIsomorphism( Group G, const std::string& x, const std::string& y ) {
+	// Is the alternating group
+	bool multiple = 0;
+	bool isomorphic = 1;
+	int k[256];
+	memset( k, 0, sizeof(int)*256 );
+	for( unsigned char c : x ) {
+		multiple |= k[c] & 1;
+		k[c]++;
+	}
+	for( unsigned char c : y ) {
+		isomorphic &= (k[c] > 0);
+		k[c]--;
+	}
+	if( not isomorphic )
+		return Empty();
+	Permutation tau = G->one();
+	std::vector<int> pattern = tau.getArrayNotation();
+	bool alternating = true;
+	for( int i = 0; i < n; i++ ) {
+		int j = find( y.begin(), y.end(), x[i] ) - y.begin();
+		if( i != j ) {
+			swap( y[i], y[j] );
+			swap( pattern[i], pattern[j] );
+			tau = tau * Permutation( pattern );
+			swap( pattern[i], pattern[j] );
+			alternating = not alternating;
+		}
+	}
+	if( (not alternating) or multiple )
+		return Coset( G, G, tau );
+	else
+		return Empty();
+}
 
 Iso JohnsonCase( Action<std::set<int>> B, const std::string& x, const std::string& y ) {
 	Group G = B.group();

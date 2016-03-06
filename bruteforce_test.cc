@@ -1,12 +1,14 @@
 #include <iostream>
 #include <string>
-#include <pair>
+#include <utility>
+#include <vector>
+#include <ctime>
 #include "coset.h"
 #include "group.h"
 #include "bruteforce.h"
 
-std::pair<std::string,std::pair> randomStrings( int n ) {
-	vector<int> cvalues;
+std::pair<std::string,std::string> randomStrings( int n ) {
+	std::vector<int> cvalues;
 	int c = 0;
 	int total = 0;
 	while( total < 4*n ) {
@@ -27,15 +29,20 @@ std::pair<std::string,std::pair> randomStrings( int n ) {
 }
 
 int main() {
-	Group S12( new SymmetricGroup(12) );
-	Group Dih12( new Subgroup( S12, { {1,2,3,4,5,6,7,8,9,10,11,0}, {6,5,4,3,2,1,0,11,10,9,8,7} } ) );
-	Group A12( new Subgroup( S12, { {1,2,3,4,5,6,7,8,9,10,0,11}, {1,0,2,3,4,5,6,7,8,9,10,11} } ) );
-	Group C2_6( new Subgroup( S12,  { {1,0,2,3,4,5,6,7,8,9,10,11}, {0,1,3,2,4,5,6,7,8,9,10,11}, {0,1,2,3,5,4,6,7,8,9,10,11}, {0,1,2,3,4,5,7,6,8,9,10,11}, {0,1,2,3,4,5,6,7,9,8,10,11}, {0,1,2,3,4,5,6,7,8,9,11,10} }  ) )
+	Group S10( new SymmetricGroup(10) );
+	Group Dih10( new Subgroup( S10, { {1,2,3,4,5,6,7,8,9,0}, {5,4,3,2,1,0,9,8,7,6} } ) );
+	Group A10( new Subgroup( S10, { {1,2,3,4,5,6,7,8,0,9}, {0,1,2,3,4,5,6,8,9,7} } ) );
+	Group C2_5( new Subgroup( S10,  { {1,0,2,3,4,5,6,7,8,9}, {0,1,3,2,4,5,6,7,8,9}, {0,1,2,3,5,4,6,7,8,9}, {0,1,2,3,4,5,7,6,8,9}, {0,1,2,3,4,5,6,7,9,8}} ) );
+	Group G( new Subgroup( S10,  { {1,0,2,3,4,5,6,7,8,9}, {0,1,3,2,4,5,6,7,8,9}, {0,1,2,3,5,4,6,7,8,9}, {0,1,2,3,4,5,7,6,8,9}, {0,1,2,3,4,5,6,7,9,8}, {1,2,3,4,5,6,7,8,9,0} } ) );
+	srand( time( 0 ) );
 	for( int i = 0; i < 10; i++ ) {
-		auto p = randomStrings( 12 );
-		std::cout << x << std::endl << y << std::endl;
-		std::cout << BruteforceIsomorphism( Dih12, p.first, p.second ) << std::endl;
-		std::cout << BruteforceIsomorphism( C2_6, p.first, p.second ) << std::endl;
+		auto p = randomStrings( 10 );
+		std::cout << p.first << std::endl << p.second << std::endl;
+		std::cout << BruteforceIsomorphism( Dih10, p.first, p.second ) << std::endl;
+		std::cout << BruteforceIsomorphism( C2_5, p.first, p.second ) << std::endl;
+		std::cout << BruteforceIsomorphism( G, p.first, p.second ) << std::endl;
+		std::cout << BruteforceIsomorphism( A10, p.first, p.second ) << std::endl;
+		std::cout << BruteforceIsomorphism( S10, p.first, p.second ) << std::endl;
 		std::cout << "---" << std::endl;
 	}
 	return 0;

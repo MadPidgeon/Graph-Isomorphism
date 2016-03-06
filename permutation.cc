@@ -52,6 +52,10 @@ int Permutation::operator()( int k ) const {
 	return _map[k];
 }
 
+const std::vector<int>& Permutation::getArrayNotation() const {
+	return _map;
+}
+
 std::vector<std::vector<int>> Permutation::getCycleNotation() const {
 	std::vector<std::vector<int>> cycles;
 	std::set<int> done;

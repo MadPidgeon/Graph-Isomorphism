@@ -5,6 +5,7 @@ class Coset;
 
 #include "group.h"
 #include "permutation.h"
+#include "ext.h"
 
 class Coset {
 	Group _G;

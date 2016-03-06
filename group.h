@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include <set>
+#include <deque>
 
 class _Group;
 class Subgroup;
@@ -38,8 +39,10 @@ class FurstHopcroftLuks {
 public:
 	FurstHopcroftLuks() : _G( nullptr ), _order(0) {}
 	void create( const _Group* group );
+	void create( const std::deque<Permutation>& L );
 	bool contains( const Permutation& );
 	int order() const;
+	std::vector<Permutation> generators() const;
 	operator bool() const;
 };
 

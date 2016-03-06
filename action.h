@@ -33,6 +33,7 @@ public:
 	const std::vector<T>& domain() const;
 	Group group() const;
 	std::vector<std::vector<T>> orbits() const;
+	actionFunction function() const;
 	//Group stabilizer() const;
 	Group kernel() const;
 
@@ -41,17 +42,21 @@ public:
 
 	Action<T> subgroupAction( Group G ) const;
 	Action<std::set<T>> setwiseAction( std::vector<std::set<T>> ) const;
+	Action<std::set<T>> setwiseAction( int t ) const;
 	Action<std::vector<T>> tupleAction( int k ) const;
 
 	Action<std::set<T>> randomBlocksystem() const;
+	Action<std::set<T>> reverseSystemOfImprimitivity() const;
 	Action<std::set<T>> systemOfImprimitivity() const;
+
+	Group anonymize() const;
 	
 	Action( Group G, std::vector<T> domain, actionFunction action );
 };
 
 Action<int> SubsetAction( Group G, std::vector<int> subset );
 Action<int> NaturalAction( Group G );
-Action<matrix<int>> MatrixAction( Group G );
+//Action<matrix<int>> MatrixAction( Group G );
 
 template<typename T>
 Action<T> ActionOnTransitiveClosure( Group G, T x, typename Action<T>::actionFunction _action ) {
@@ -131,6 +136,12 @@ bool Action<T>::isTrivial() const {
 }
 
 template<typename T>
+typename Action<T>::actionFunction Action<T>::function() const {
+	return _action;
+}
+
+
+template<typename T>
 Action<std::set<T>> Action<T>::systemOfImprimitivity() const {
 	std::vector<std::set<T>> set_domain;
 	for( auto& x : _domain )
@@ -205,6 +216,56 @@ Action<std::set<T>> Action<T>::randomBlocksystem() const {
 }
 
 template<typename T>
+Action<std::set<T>> Action<T>::reverseSystemOfImprimitivity() const {
+	// M. D. Atkinson
+	size_t N = _domain.size();
+	std::map<T,int> inverse_domain;
+	std::stack<int> C;
+	UnionFind f( N );
+	for( int i = 0; i < N; i++ )
+		inverse_domain[ _domain[ i ] ] = i;
+	std::map<int,int> other_map;
+	std::set<T> P_omega;
+	std::set<T> best;
+	for( int omega = 1; omega < N; omega++ ) {
+		C.push( omega );
+		f.clear();
+		f.cup( 0, omega );
+		while( !C.empty() ) {
+			int beta = C.top();
+			C.pop();
+			int alpha = f.find( beta );
+			for( const auto& gen : _G->generators() ) {
+				int gamma = inverse_domain[ _action( gen, _domain[ alpha ] ) ];
+				int delta = inverse_domain[ _action( gen, _domain[ beta ] ) ];
+				if( f.find(gamma) != f.find(delta) ) {
+					C.push( std::max( f.find(gamma), f.find(delta) ) );
+					f.cup( gamma, delta );
+				}
+			}
+		}
+
+		P_omega.clear();
+		other_map.clear();
+		for( int i = 0; i < N; i++ )
+			if( f.find( i ) == 0 )
+				P_omega.insert( _domain[i] );
+
+		if( 1 < P_omega.size() && P_omega.size() < best.size() )
+			best = std::move( P_omega );
+	}
+
+	auto a = _action;
+	return ActionOnTransitiveClosure<std::set<T>>( _G, best, 
+		[a]( const Permutation& sigma, std::set<T> X ) -> std::set<T> { 
+			std::set<T> r; 
+			for( auto& x : X ) 
+				r.insert( a( sigma, x ) );
+			return r;
+		} );
+}
+
+template<typename T>
 Action<T> Action<T>::subgroupAction( Group G ) const {
 	if( !_G->hasSubgroup( G ) )
 		throw std::range_error( "Group is not a subgroup" );
@@ -240,6 +301,23 @@ Action<std::vector<T>> Action<T>::tupleAction( int k ) const {
 			Y.push_back( a( sigma, x ) ); 
 		return Y; 
 	} );
+}
+
+template<typename T>
+Group Action<T>::anonymize() const {
+	int n = domain().size();
+	Group S( new SymmetricGroup( n ) );
+	std::map<T,int> inverse_mapping;
+	for( int i = 0; i < n; i++ )
+		inverse_mapping[_domain[i]] = i;
+	std::vector<Permutation> generators;
+	for( const Permutation& sigma : group()->generators() ) {
+		std::vector<int> generator(n);
+		for( int i = 0; i < n; i++ )
+			generator[i] = inverse_mapping[_action(sigma,_domain[i])];
+		generators.emplace_back( std::move( generator ) );
+	}
+	return Group( new Subgroup( S, generators ) );
 }
 
 /*

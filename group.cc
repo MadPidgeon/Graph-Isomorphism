@@ -226,6 +226,18 @@ void FurstHopcroftLuks::create( const _Group* group ) {
 	}
 }
 
+void FurstHopcroftLuks::create( const std::deque<Permutation>& L ) {
+	if( L.size() == 0 )
+		throw;
+	_n = L.front().degree();
+	_reps.resize( _n );
+	for( auto& rep : _reps )
+		rep.insert( _G->one() );
+	for( const auto& sigma : L )
+		filter( sigma );
+	_G = new Subgroup( Group( new SymmetricGroup( _n ) ), generators() );
+}
+
 bool FurstHopcroftLuks::filter( Permutation alpha, bool add ) {
 	for( int i = 0; i < _n; i++ ) {
 		bool found = false;
@@ -253,6 +265,15 @@ bool FurstHopcroftLuks::filter( Permutation alpha, bool add ) {
 		}
 	}
 	return false;
+}
+
+std::vector<Permutation> FurstHopcroftLuks::generators() const {
+	std::vector<Permutation> r;
+	for( int i = 0; i < _n; i++ )
+		for( const auto& sigma : _reps[i] )
+			if( !sigma.isIdentity() )
+				r.push_back( sigma );
+	return r;
 }
 
 bool FurstHopcroftLuks::contains( const Permutation& alpha ) {
