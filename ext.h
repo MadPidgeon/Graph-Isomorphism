@@ -221,3 +221,10 @@ std::vector<int> rank( const T& data ) {
 template<typename T> bool size_compare( const T& lhs, const T& rhs ) {
 	return lhs.size() < rhs.size();
 }
+
+template<typename T> std::set<T> flatten( const std::set<std::set<T>>& s ) {
+	std::set<T> t;
+	for( const auto& u : s )
+		t.insert( u.begin(), u.end() );
+	return t;
+}

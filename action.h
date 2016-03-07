@@ -81,8 +81,8 @@ Action<T> ActionOnTransitiveClosure( Group G, T x, typename Action<T>::actionFun
 
 template<typename T>
 T Action<T>::operator()( const Permutation& sigma, T x ) const {
-	if( ! _G->contains( sigma ) )
-		throw std::range_error( "Permutation not part of group action" );
+	/*if( ! _G->contains( sigma ) )
+		throw std::range_error( "Permutation not part of group action" );*/
 	return _action( sigma, x );
 }
 
@@ -105,6 +105,7 @@ std::vector<std::vector<T>> Action<T>::orbits() const {
 	std::vector<T> o;
 	auto gens = _G->generators();
 	T y;
+	// improve with union find
 	for( auto x : _domain ) {
 		if( done.count( x ) == 0 ) {
 			to_do.push( x );
@@ -251,9 +252,11 @@ Action<std::set<T>> Action<T>::reverseSystemOfImprimitivity() const {
 			if( f.find( i ) == 0 )
 				P_omega.insert( _domain[i] );
 
-		if( 1 < P_omega.size() && P_omega.size() < best.size() )
+		if( 1 < P_omega.size() && ( P_omega.size() < best.size() || best.size() == 0 ) )
 			best = std::move( P_omega );
 	}
+	if( best.size() == 0 )
+		throw std::range_error( "Group action is primitive" );
 
 	auto a = _action;
 	return ActionOnTransitiveClosure<std::set<T>>( _G, best, 
@@ -285,9 +288,9 @@ Action<std::set<T>> Action<T>::setwiseAction( std::vector<std::set<T>> d ) const
 
 template<typename T>
 Action<std::vector<T>> Action<T>::tupleAction( int k ) const {
-	std::vector<std::vector<int>> new_domain;
+	std::vector<std::vector<T>> new_domain;
 	for( auto& tup : all_tuples( _domain.size(), k ) ) {
-		std::vector<int> new_tuple;
+		std::vector<T> new_tuple;
 		new_tuple.reserve( k );
 		for( int x : tup )
 			new_tuple.push_back( _domain[x] );
