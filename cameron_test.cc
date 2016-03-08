@@ -29,7 +29,7 @@ int main() {
 		for( int i = 0; i < 2; i++ ) {
 			int i2 = sigma(i+32)-32;
 			for( int j : S[i] )
-				T[i2].insert( sigma(j+i2*15) % 15 );
+				T[i2].insert( sigma(j+i2*16) % 16 );
 		}
 		return T;
 	} );
@@ -39,7 +39,6 @@ int main() {
 		std::cout << t << std::endl;
 		t = A( sigma, t );
 	}
-	std::cin.get();
 
 	/*Group S18( new SymmetricGroup( 5+5+5+3 ) );
 	std::vector<std::set<int>> subsets;
@@ -84,7 +83,7 @@ int main() {
 	std::cout << Q.domain() << std::endl;*/
 	std::cout << "----------------" << std::endl;
 	Group H = A.anonymize();
-	std::cout << H->generators() << std::endl;
+	std::cout << H->domain().size() << std::endl;
 	//std::cout << H->degree() << ", " << H->order() << std::endl;
 	std::cout << "----------------" << std::endl;
 	/*auto C = CameronReduction(A);

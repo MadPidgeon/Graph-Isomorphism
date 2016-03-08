@@ -33,6 +33,8 @@ public:
 	const std::vector<T>& domain() const;
 	Group group() const;
 	std::vector<std::vector<T>> orbits() const;
+	std::vector<std::vector<std::array<T,2>>> orbitals() const;
+	std::vector<std::vector<std::array<T,2>>> hack__orbitals() const;
 	actionFunction function() const;
 	//Group stabilizer() const;
 	Group kernel() const;
@@ -44,6 +46,8 @@ public:
 	Action<std::set<T>> setwiseAction( std::vector<std::set<T>> ) const;
 	Action<std::set<T>> setwiseAction( int t ) const;
 	Action<std::vector<T>> tupleAction( int k ) const;
+	template<int k>
+	Action<std::array<T,k>> arrayAction() const;
 
 	Action<std::set<T>> randomBlocksystem() const;
 	Action<std::set<T>> reverseSystemOfImprimitivity() const;
@@ -104,12 +108,15 @@ std::vector<std::vector<T>> Action<T>::orbits() const {
 	std::stack<T> to_do;
 	std::vector<T> o;
 	auto gens = _G->generators();
+	int counter = 0;
 	T y;
 	// improve with union find
 	for( auto x : _domain ) {
 		if( done.count( x ) == 0 ) {
 			to_do.push( x );
 			while( !to_do.empty() ) {
+				if( (++counter) % 10000 == 0 )
+					std::cout << counter << std::endl;
 				y = to_do.top();
 				to_do.pop();
 				if( done.count( y ) == 0 ) {
@@ -124,6 +131,35 @@ std::vector<std::vector<T>> Action<T>::orbits() const {
 		}
 	}
 	return _orbits;
+}
+
+template<typename T>
+std::vector<std::vector<std::array<T,2>>> Action<T>::orbitals() const {
+	return arrayAction<2>().orbits();
+}
+
+template<typename T>
+std::vector<std::vector<std::array<T,2>>> Action<T>::hack__orbitals() const {
+	int n = domain().size();
+	const auto& gens = group()->generators();
+	UnionFind uf( n*n );
+	std::vector<std::vector<std::array<T,2>>> r;
+	std::map<T,T> x;
+	for( int i = 0; i < n; i++ )
+		for( int j = 0; j < n; j++ )
+			for( const auto& g : gens )
+				uf.cup( i*n+j, g(i)*n+g(j) );
+	for( int i = 0; i < n; i++ ) {
+		for( int j = 0; j < n; j++ ) {
+			T a = uf.find( i*n+j );
+			if( x.count(a) == 0 ) {
+				x[a] = r.size();
+				r.emplace_back();
+			}
+			r[x[a]].push_back(std::array<T,2>({i,j}));
+		}
+	}
+	return r;
 }
 
 template<typename T>
@@ -288,6 +324,7 @@ Action<std::set<T>> Action<T>::setwiseAction( std::vector<std::set<T>> d ) const
 
 template<typename T>
 Action<std::vector<T>> Action<T>::tupleAction( int k ) const {
+	std::cerr << "A";
 	std::vector<std::vector<T>> new_domain;
 	for( auto& tup : all_tuples( _domain.size(), k ) ) {
 		std::vector<T> new_tuple;
@@ -296,12 +333,33 @@ Action<std::vector<T>> Action<T>::tupleAction( int k ) const {
 			new_tuple.push_back( _domain[x] );
 		new_domain.emplace_back( std::move( new_tuple ) );
 	}
+	std::cerr << "B";
 	actionFunction a = _action;
-	return Action<std::vector<T>>( _G, new_domain, [a]( const Permutation& sigma, std::vector<T> X ) { 
+	return Action<std::vector<T>>( _G, new_domain, [a]( const Permutation& sigma, const std::vector<T>& X ) { 
 		std::vector<T> Y;
 		Y.reserve( X.size() ); 
 		for( auto& x : X ) 
 			Y.push_back( a( sigma, x ) ); 
+		return Y; 
+	} );
+}
+
+template<typename T>
+template<int k>
+Action<std::array<T,k>> Action<T>::arrayAction() const {
+	std::cerr << "A";
+	std::vector<std::array<T,k>> new_domain;
+	for( auto& tup : all_tuples( _domain.size(), k ) ) {
+		new_domain.emplace_back();
+		for( size_t i = 0; i < k; i++ )
+			new_domain.back()[i] = _domain[tup[i]];
+	}
+	std::cerr << "B";
+	actionFunction a = _action;
+	return Action<std::array<T,k>>( _G, new_domain, [a]( const Permutation& sigma, const std::array<T,k>& X ) { 
+		std::array<T,k> Y;
+		for( size_t i = 0; i < k; i++ )
+			Y[i] = a( sigma, X[i] );
 		return Y; 
 	} );
 }

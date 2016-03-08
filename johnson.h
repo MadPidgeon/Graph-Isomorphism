@@ -2,6 +2,7 @@
 #include <vector>
 #include <set>
 #include <map>
+#include <unordered_map>
 #include <utility>
 #include "group.h"
 #include "action.h"
@@ -9,15 +10,16 @@
 
 template<typename T>
 Action<std::set<T>> CameronReduction( Action<T> phi ) {
-	std::cerr << "CameronReduction\n"; 
-	auto psi = phi.tupleAction(2);
+	/*std::cerr << "CameronReduction\n";
+	auto psi = phi.template arrayAction<2>();
 	std::cerr << "Action\n"; 
 	auto orbitals = psi.orbits();
-	std::cerr << "Orbitals\n"; 
-	std::sort( orbitals.begin(), orbitals.end(), size_compare<std::vector<std::vector<T>>> );
+	std::cerr << "Orbitals\n"; */
+	auto orbitals = phi.hack__orbitals();
+	std::sort( orbitals.begin(), orbitals.end(), size_compare<std::vector<std::array<T,2>>> );
 	const auto& Gamma = orbitals[1];
 	const auto& Delta_prime = orbitals.back();
-	std::map<T,std::vector<T>> Delta;
+	std::unordered_map<T,std::vector<T>> Delta;
 	for( const auto& delta : Delta_prime )
 		Delta[delta[0]].push_back( delta[1] );
 	std::set<T> B;
@@ -25,8 +27,10 @@ Action<std::set<T>> CameronReduction( Action<T> phi ) {
 	std::set<std::set<T>> D_prime;
 	std::cerr << "|Gamma|=" << Gamma.size() << std::endl; 
 	std::cerr << "|Delta|=" << Delta_prime.size() << std::endl; 
+	int counter = 0;
 	for( const auto& p : Gamma ) {
-		// std::cerr << "."; 
+		if( (++counter) % 1000 )
+			std::cerr << counter << std::endl; 
 		const T& x = p[0];
 		const T& y = p[1];
 		B = {};
@@ -41,6 +45,7 @@ Action<std::set<T>> CameronReduction( Action<T> phi ) {
 				C.erase( q );
 		D_prime.emplace( std::move( C ) );
 	}
+	std::cout << "Done" << std::endl;
 	std::vector<std::set<T>> D( D_prime.begin(), D_prime.end() );
 	Action<std::set<T>> chi_prime = phi.setwiseAction( D );
 	std::cerr << chi_prime.domain() << std::endl; 

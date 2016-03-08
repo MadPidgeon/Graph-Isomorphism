@@ -37,6 +37,8 @@ _Group::~_Group() {
 }
 
 bool Subgroup::contains( const Permutation& alpha ) const {
+	#warning ("Using membership testing")
+	__asm("int $3\n\t");
 	if( !_fhl )
 		_fhl.create( this );
 	return _fhl.contains( alpha );
@@ -76,9 +78,9 @@ bool _Group::_filter( Permutation alpha, std::vector<std::set<Permutation>>& rep
 
 
 Subgroup::Subgroup( Group G, std::vector<Permutation> gens ) {
-	for( auto& gen : gens )
+	/*for( auto& gen : gens )
 		if( !G->contains( gen ) )
-			throw std::range_error( "Permutation not an element of the supergroup" );
+			throw std::range_error( "Permutation not an element of the supergroup" );*/
 	swap( _supergroup, G );
 	swap( _generators, gens );
 }

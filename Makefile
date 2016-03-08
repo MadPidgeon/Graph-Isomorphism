@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-c -Wall -Wextra -std=c++11 -Wfatal-errors
+CFLAGS=-c -Wall -Wextra -std=c++11 -Wfatal-errors -g
 
 .PHONY: clean all lib
 
