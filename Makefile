@@ -1,5 +1,5 @@
-CC=g++
-CFLAGS=-c -Wall -Wextra -std=c++11 -Wfatal-errors -g
+CC=g++-5
+CFLAGS=-c -Wall -Wextra -std=c++1y -Wfatal-errors -g
 
 .PHONY: clean all lib
 
@@ -62,5 +62,5 @@ cameron_test.o: cameron_test.cc
 	$(CC) $(CFLAGS) cameron_test.cc
 
 cameron_test: cameron_test.o lib
-	$(CC) permutation.o group.o action.o unionfind.o coset.o ext.o cameron_test.o -o cameron_test
+	$(CC) permutation.o group.o action.o unionfind.o coset.o ext.o cameron_test.o -o cameron_test -lpthread
 	

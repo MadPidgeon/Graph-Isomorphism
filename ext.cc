@@ -5,6 +5,50 @@ std::ostream& operator<<( std::ostream& os, Empty ) {
 	return os << "Ø";
 }
 
+range::iterator::iterator( int i ) : _i( i ) {
+}
+
+range::iterator::iterator( const self_type& other ) {
+	_i = other._i;
+}
+
+range::iterator::self_type range::iterator::operator++(int) { 
+	self_type r = *this; 
+	++(*this); 
+	return r; 
+}
+
+range::iterator::self_type& range::iterator::operator++() {
+	++_i;
+	return *this;
+}
+
+range::iterator::reference range::iterator::operator*() { 
+	return _i;
+}
+
+range::iterator::pointer range::iterator::operator->() { 
+	return &_i; 
+}
+
+bool range::iterator::operator==(const self_type& rhs) { 
+	return _i == rhs._i; 
+}
+
+bool range::iterator::operator!=(const self_type& rhs) { 
+	return _i != rhs._i; 
+}
+
+range::iterator range::begin() { 
+	return iterator( _n ); 
+}
+
+range::iterator range::end() { 
+	return iterator( _m ); 
+}
+
+range::range( int n, int m ) : _n(n), _m(m) {}
+
 all_tuples::iterator::iterator( int n, int r ) : _n(n), _r(r), _tuple( _r, 0 ) {
 }
 
@@ -132,4 +176,18 @@ std::vector<int> inverse_mapping( const std::vector<int>& d ) {
 	for( size_t i = 0; i < d.size(); i++ )
 		r[d[i]] = i;
 	return r;
+}
+
+uint binom( int n, int k ) {
+	uint ans = 1;
+	k = std::max( k, n-k );
+	for( int j = 1; j <= k; j++, n-- ) {
+		if( n%j==0 )
+			ans *= n/j;
+		else if( ans%j == 0 )
+			ans = ans/j*n;
+		else
+			ans = (ans*n)/j;
+	}
+	return ans;
 }
