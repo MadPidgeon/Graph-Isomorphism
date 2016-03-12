@@ -51,6 +51,20 @@ std::ostream& operator<<( std::ostream& os, const std::deque<T>& s ) {
 	return os;
 }
 
+template<typename T,size_t k>
+std::ostream& operator<<( std::ostream& os, const std::array<T,k>& s ) {
+	if( s.empty() )
+		os << "()";
+	else {
+		auto x = s.begin();
+		os << "(" << (*x);
+		while( (++x) != s.end() )
+			os << "," << (*x);
+		os << ")";
+	}
+	return os;
+}
+
 template<typename T, typename U>
 std::ostream& operator<<( std::ostream& os, const std::map<T,U>& s ) {
 	if( s.empty() )
@@ -222,9 +236,9 @@ public:
 		std::array<int,_r> _array;
 	public:
 		typedef iterator self_type;
-		typedef std::vector<int> value_type;
-		typedef std::vector<int>& reference;
-		typedef std::vector<int>* pointer;
+		typedef std::array<int,_r> value_type;
+		typedef std::array<int,_r>& reference;
+		typedef std::array<int,_r>* pointer;
 		typedef std::forward_iterator_tag iterator_category;
 		typedef size_t difference_type;
 		iterator( int n );
@@ -238,6 +252,7 @@ public:
 	};
 	iterator begin();
 	iterator end();
+	size_t size() const;
 	all_arrays( int n );
 };
 
@@ -249,7 +264,6 @@ all_arrays<_r>::iterator::iterator( int n ) : _n(n) {
 template<int _r>
 all_arrays<_r>::iterator::iterator( const self_type& other ) {
 	_n = other._n;
-	_r = other._r;
 	_array = other._array;
 }
 
@@ -302,6 +316,12 @@ template<int _r>
 typename all_arrays<_r>::iterator all_arrays<_r>::end() { 
 	return iterator( -1 ); 
 }
+
+template<int _r>
+size_t all_arrays<_r>::size() const { 
+	return pow(_n,_r);
+}
+
 
 template<int _r>
 all_arrays<_r>::all_arrays( int n ) : _n(n) {}

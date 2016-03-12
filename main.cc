@@ -1,6 +1,6 @@
 #include <iostream>
 #include "group.h"
-#include "action_revamp.h"
+#include "action.h"
 
 int main() {
 	Group S8( new SymmetricGroup(8) );

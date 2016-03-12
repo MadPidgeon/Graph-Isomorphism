@@ -6,9 +6,69 @@
 #include "action.h"
 #include "ext.h"
 
-std::set<int> JordanLiebeckSet( Action<std::set<int>> phi, int x ) {
+RestrictedNaturalSetAction CameronReduction( NaturalAction phi ) {
+	int n = phi.domain().size();
+	std::cerr << "M" ;
+	NaturalArrayAction<2> psi( phi.group() );
+	std::cerr << "E" ;
+	auto orbitals = psi.orbits();
+	std::sort( orbitals.begin(), orbitals.end(), size_compare<std::vector<NaturalArrayAction<2>::value_type>> );
+	const auto& Gamma = orbitals[1];
+	const auto& Delta_prime = orbitals.back();
+	std::unordered_map<int,std::deque<int>> Delta;
+	for( const auto& delta : Delta_prime )
+		Delta[delta[0]].push_back( delta[1] );
+	std::vector<bool> B(n);
+	std::vector<bool> C_prime(n);
+	size_t setsize = 0;
+	std::vector<int> C;
+	std::deque<std::vector<int>> D_prime;
+	std::cerr << "|Gamma|=" << Gamma.size() << std::endl; 
+	std::cerr << "|Delta|=" << Delta_prime.size() << std::endl; 
+	int counter = 0;
+	for( const auto& p : Gamma ) {
+		if( (++counter) % 1000 )
+			std::cerr << counter << std::endl; 
+		int x = p[0];
+		int y = p[1];
+		B.assign( n, false );
+		C_prime.assign( n, true );
+		for( int q : Delta[y] )
+			B[q] = true;
+		for( int q : Delta[x] )
+			B[q] = false;
+		for( int z = 0; z < n; z++ )
+			if( B[z] )
+				for( int q : Delta[z] )
+					C_prime[q] = false;
+		C.reserve( setsize );
+		for( int i = 0; i < n; i++ )
+			if( C_prime[i] )
+				C.push_back( i );
+		setsize = C.size();
+		if( std::find( D_prime.begin(), D_prime.end(), C ) == D_prime.end() )
+			D_prime.emplace_back( std::move( C ) );
+	}
+	std::cout << "Done" << std::endl;
+	return RestrictedNaturalSetAction( phi.group(), D_prime );
+
+
+	/*std::vector<std::set<T>> D( D_prime.begin(), D_prime.end() );
+	Action<std::set<T>> chi_prime = phi.setwiseAction( D );
+	std::cerr << chi_prime.domain() << std::endl; 
+	Action<std::set<std::set<T>>> chi = chi_prime.reverseSystemOfImprimitivity();
+	std::cerr << chi.domain() << std::endl; 
+	D.clear();
+	for( const auto& ss : chi.domain() )
+		D.emplace_back( std::move( flatten( ss ) ) );
+	return Action<std::set<T>>( chi_prime.group(), D, chi_prime.function() );*/
+
+	//return RestrictedNaturalSetAction( phi.group(), std::deque<std::vector<int>>( 1, std::vector<int>( 1, 0 ) ) );
+}
+
+/*std::vector<int> JordanLiebeckSet( RestrictedNaturalSetAction phi, int x ) {
 	Group Gx = phi.group().stabilizer(x);
-	Action<std::set<int>> phi_prime = phi.subgroupAction( Gx );
+	RestrictedNaturalSetAction phi_prime( Gx, phi.domain() );
 	auto O = phi_prime.orbits();
 	int largest_size = 0;
 	int largest = -1;
@@ -20,7 +80,7 @@ std::set<int> JordanLiebeckSet( Action<std::set<int>> phi, int x ) {
 			largest = i;
 		}
 	}
-	std::set<int> Delta;
+	std::vector<int> Delta;
 	Delta.reserve( n - largest_size );
 	for( size_t i = 0; i < O.size(); i++ )
 		if( i != largest )
@@ -29,20 +89,20 @@ std::set<int> JordanLiebeckSet( Action<std::set<int>> phi, int x ) {
 	return Delta;
 }
 
-std::vector<std::set<int>> JohnsonStandardBlocks( Action<std::set<int>> phi ) {
+RestrictedNaturalSetAction JohnsonStandardBlocks( RestrictedNaturalSetAction phi ) {
 	Group G = phi.group();
-	auto& Omega = G.domain();
-	std::map<std::set<int>,std::set<int>> equivalence_map;
+	const auto& Omega = G.domain();
+	std::map<std::vector<int>,std::vector<int>> equivalence_map;
 	for( int x : Omega ) {
-		std::set<int> Tx = JordanLiebeckSet( x );
+		std::set<int> Tx = JordanLiebeckSet( phi, x );
 		if( equivalence_map.count( Tx ) == 0 )
-			equivalence_map.insert( Tx, std::set<int>( x ) );
+			equivalence_map.insert( Tx, std::vector<int>({ x }) );
 		else
-			equivalence_map[Tx].insert( x );
+			equivalence_map[Tx].push_back( x );
 	}
-	std::vector<std::set<int>> blocks;
-	blocks.reserve( equivalence_map.size() );
+	std::deque<std::vector<int>> blocks;
 	for( auto& partition : equivalence_map )
 		blocks.emplace_back( std::move( partition.second ) );
-	return NaturalAction( G ).setwiseAction( blocks );
-}
+	return RestrictedNaturalSetAction( G, blocks );
+}*/
+

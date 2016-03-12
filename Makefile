@@ -55,12 +55,15 @@ bruteforce_test.o: bruteforce_test.cc
 configuration.o: configuration.cc
 	$(CC) $(CFLAGS) configuration.cc
 
+johnson.o: johnson.cc
+	$(CC) $(CFLAGS) johnson.cc
+
 configuration_test.o: configuration_test.cc
 	$(CC) $(CFLAGS) configuration_test.cc
 
 cameron_test.o: cameron_test.cc
 	$(CC) $(CFLAGS) cameron_test.cc
 
-cameron_test: cameron_test.o lib
-	$(CC) permutation.o group.o action.o unionfind.o coset.o ext.o cameron_test.o -o cameron_test -lpthread
+cameron_test: cameron_test.o johnson.o lib
+	$(CC) permutation.o group.o action.o unionfind.o coset.o ext.o johnson.o cameron_test.o -o cameron_test -lpthread
 	

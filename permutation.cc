@@ -5,6 +5,8 @@
 #include <stdexcept>
 #include <algorithm>
 
+#include "ext.h"
+
 int Permutation::degree() const {
 	return _map.size();
 }
@@ -59,18 +61,20 @@ const std::vector<int>& Permutation::getArrayNotation() const {
 
 std::vector<std::vector<int>> Permutation::getCycleNotation() const {
 	std::vector<std::vector<int>> cycles;
-	std::set<int> done;
+	std::vector<bool> done( degree(), false );
 	for( int i = 0; i < degree(); i++ ) {
-		if( done.count( i ) == 0 ) {
+		if( not done[i] ) {
 			int j = i;
 			std::vector<int> cycle;
 			do {
-				done.insert( j );
+				done[j] = true;
 				cycle.push_back( j );
 				j = (*this)(j);
 			} while( i != j );
 			if( cycle.size() != 1 )
-				cycles.push_back( std::move( cycle ) );
+				cycles.emplace_back( std::move( cycle ) );
+			else
+				cycle.clear();
 		}
 	}
 	return cycles;

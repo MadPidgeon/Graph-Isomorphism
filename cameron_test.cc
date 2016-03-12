@@ -3,8 +3,36 @@
 #include "group.h"
 
 int main() {
+	// construct elements: 2-transversals
+	Group S18( new SymmetricGroup( 2*16 ) );
+	RestrictedNaturalSetAction::domain_type D;
+	for( auto& t1 : all_ordered_tuples( 16, 2 ) ) {
+		for( auto& t2 : all_ordered_tuples( 16, 2) ) {
+			RestrictedNaturalSetAction::value_type V;
+			V.reserve( 4 );
+			V.push_back( t1[0] );
+			V.push_back( t1[1] );
+			V.push_back( t2[0] + 16 );
+			V.push_back( t2[1] + 16 );
+			D.emplace_back( std::move( V ) );
+		}
+	}
+	// construct group: S_16 Wr C_2
+	Group G( new Subgroup( S18, {
+		{ 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15, 0, 16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31},
+		{ 1, 0, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15, 16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31},
+		{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15, 17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,16},
+		{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15, 17,16,18,19,20,21,22,23,24,25,26,27,28,29,30,31},
+		{16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,11,12,13,14,15}} ) );
+	// anonimize the action of G on D
+	RestrictedNaturalSetAction A( G, D );
+	Group G_prime = A.anonymize();
+	std::cout << G_prime->generators() << std::endl;
+	// find structure
+	auto C = CameronReduction( NaturalAction( G_prime ) );
+
 	// creating a wreath product
-	Group S18( new SymmetricGroup( 16+16+2 ) );
+	/*Group S18( new SymmetricGroup( 16+16 ) );
 	std::vector<std::set<int>> subsets;
 	std::vector<std::vector<std::set<int>>> transversals;
 	subsets.reserve( 120 );
@@ -38,7 +66,7 @@ int main() {
 	for( int i = 0; i < 50; i++ ) {
 		std::cout << t << std::endl;
 		t = A( sigma, t );
-	}
+	}*/
 
 	/*Group S18( new SymmetricGroup( 5+5+5+3 ) );
 	std::vector<std::set<int>> subsets;
@@ -78,9 +106,9 @@ int main() {
 		std::cout << t << std::endl;
 		t = A( sigma, t );
 	}*/
-	std::cout << "----------------" << std::endl;
-	/*auto Q = A.systemOfImprimitivity();
-	std::cout << Q.domain() << std::endl;*/
+	/*std::cout << "----------------" << std::endl;
+	auto Q = A.systemOfImprimitivity();
+	std::cout << Q.domain() << std::endl;
 	std::cout << "----------------" << std::endl;
 	Group H = A.anonymize();
 	std::cout << H->domain().size() << std::endl;
@@ -88,9 +116,9 @@ int main() {
 	std::cout << "----------------" << std::endl;
 	/*auto C = CameronReduction(A);
 	std::cout << C.domain() << std::endl;*/
-	Action<int> B = NaturalAction( H );
+	/*Action<int> B = NaturalAction( H );
 	auto C = CameronReduction( B );
-	std::cout << C.domain() << std::endl;
+	std::cout << C.domain() << std::endl;*/
 
 	return 0;
 }
