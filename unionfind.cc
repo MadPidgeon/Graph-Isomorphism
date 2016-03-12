@@ -14,12 +14,14 @@ int UnionFind::find( int s ) const {
 	return s;
 }
 
-void UnionFind::cup( int a, int b ) {
+bool UnionFind::cup( int a, int b ) {
 	int y = find(b);
 	int x = find(a);
 	if( y < x )
 		std::swap( x, y );
+	bool r = y != x;
 	set[ y ] = x;
+	return r;
 }
 
 void UnionFind::clear() {

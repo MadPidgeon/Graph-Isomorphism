@@ -6,112 +6,395 @@
 #include <stack>
 #include <exception>
 #include <map>
+#include <memory>
+#include <unordered_map>
 
+#include "ext.h"
+#include "unionfind.h"
+#include "group.h"
 
 template<typename T>
-class _Action {
+using action_set = std::vector<T>;
+
+template<typename T,int k>
+using action_array = std::array<T,k>;
+
+class NaturalAction;
+class NaturalSetAction;
+class RestrictedNaturalSetAction;
+
+template<typename A, typename value_type, typename domain_type>
+class Action {
 	Group _group;
+	mutable std::vector<std::vector<value_type>> _orbits;
+	mutable Group _kernel;
 public:
-	typedef std::shared_pointer<const _Action<T>> Action;
 	Group group() const;
-	virtual size_t domain_size() const;
-	virtual any_const_iterator<T> cbegin() const = 0;
-	virtual any_const_iterator<T> cend() const = 0;
-	virtual std::vector<std::vector<int>> orbits() const = 0;
-	virtual Group anonymize() const = 0;
-	virtual T operator()( const Permutation& sigma, const T& x ) const = 0;
-	virtual ~_Action() = 0;
+	template<typename T = action_set<value_type>> T orbit( value_type seed ) const;
+	const std::vector<std::vector<value_type>>& orbits() const;
+	std::vector<std::vector<value_type>> calculateOrbits() const;
+	bool isTransitive() const;
+	bool isTrivial() const;
+	Group kernel() const;
+	Group anonymize() const;
+	RestrictedNaturalSetAction systemOfImprimitivity() const;
+	value_type operator()( const Permutation& sigma, const value_type& x ) const;
+	Action( Group G );
 };
 
-class NaturalAction : public _Action<int> {
+template<typename A,typename value_type, typename domain_type>
+class PointAction : public Action<A,value_type,domain_type> {
+public:
+	std::vector<std::vector<value_type>> calculateOrbits() const;
+	value_type act( const Permutation& sigma, value_type x ) const;
+	RestrictedNaturalSetAction randomBlocksystem() const;
+	PointAction( Group G );
+};
+
+class NaturalAction : public PointAction<NaturalAction,int,range> {
 public:
 	typedef int value_type;
-	virtual size_t domain_size() override const;
-	virtual any_const_iterator<value_type> override cbegin() const;
-	virtual any_const_iterator<value_type> override cend() const;
-	virtual std::vector<std::vector<value_type>> override orbits() const;
-	virtual Group anonymize() override const;
-	virtual value_type operator()( const Permutation& sigma, const value_type& x ) override const;
-	Action setAction() const;
-	template<int k> Action arrayAction() const; 
+	typedef range domain_type;
+
+	domain_type domain() const; 
+	Group anonymize() const;
+	NaturalAction( Group G );
+	/*Action<NaturalSetAction> setAction() const;
+	template<int k> Action<NaturalArrayAction<k>> arrayAction() const;*/ 
 };
 
-template<size_t k>
-class NaturalArrayAction : public _Action<std::array<int,k>> {
+class RestrictedNaturalAction : public PointAction<RestrictedNaturalAction,int,std::deque<int>> {
+public:	
+	typedef int value_type;
+	typedef std::deque<int> domain_type;
+private:
+	domain_type Omega;
 public:
-	typedef std::array<int,k> value_type;
-	virtual size_t domain_size() override const;
-	virtual any_const_iterator<value_type> cbegin() override const;
-	virtual any_const_iterator<value_type> cend() override const;
-	virtual std::vector<std::vector<value_type>> orbits() override const;
-	virtual Group anonymize() override const;
-	virtual value_type operator()( const Permutation& sigma, const value_type& x ) override const;
-	virtual T operator()( const Permutation& sigma, const T& x ) override const;
+	const domain_type& domain() const;
+	RestrictedNaturalAction( Group G, const domain_type& S );
 };
 
-class NaturalSetAction : public _Action<std::vector<int>> {
+/*
+template<size_t k>
+class NaturalArrayAction : public _Action<action_array<int,k>> {
+public:
+	typedef action_array<int,k> value_type;
+	typedef all_arrays domain_type;
+	virtual size_t domain_size() const override;
+	value_type::const_iterator cbegin() const override;
+	value_type::const_iterator cend() const override;
+	virtual std::vector<std::vector<value_type>> orbits() const override;
+	virtual Group anonymize() const override;
+	virtual value_type operator()( const Permutation& sigma, const value_type& x ) const override;
+	virtual int operator()( const Permutation& sigma, const int& x ) const override;
+};*/
+
+template<typename A,typename value_type, typename domain_type>
+class SetAction : public Action<A,value_type,domain_type> {
+protected:
 	int k;
 public:
-	typedef std::vector<int> value_type;
-	virtual size_t domain_size() override const;
-	virtual any_const_iterator<std::vector<value_type>> cbegin() override const;
-	virtual any_const_iterator<std::vector<value_type>> cend() override const;
-	virtual std::vector<std::vector<std::vector<value_type>>> orbits() override const;
-	virtual value_type operator()( const Permutation& sigma, const value_type& x ) override const;
-	virtual Group anonymize() override const;
+	value_type act( const Permutation&, const value_type& ) const;
+	SetAction( Group G, int set_size );
+};
+
+class NaturalSetAction : public SetAction<NaturalSetAction,action_set<int>,all_ordered_tuples> {
+	int n;
+public:
+	typedef action_set<int> value_type;
+	typedef all_ordered_tuples domain_type;
+
+	domain_type domain() const;
+	range subdomain() const;
+
+	NaturalSetAction( Group G, int subdomain_size, int set_size );
+};
+
+class RestrictedNaturalSetAction : public SetAction<RestrictedNaturalSetAction,action_set<int>,std::deque<action_set<int>>> {
+public:
+	typedef action_set<int> value_type;
+	typedef std::deque<value_type> domain_type;
+
+private:
+	std::deque<action_set<int>> Omega;
+
+public:
+	const domain_type& domain() const;
+	RestrictedNaturalSetAction randomBlocksystem() const;
+	RestrictedNaturalSetAction( const NaturalAction& );
+	RestrictedNaturalSetAction( Group G, domain_type D );
 };
 
 // ----------------------------------------------------------------
 
-template<typename T>
-bool _Action<T>::group() const {
+template<typename A, typename value_type, typename domain_type>
+Group Action<A,value_type,domain_type>::group() const {
 	return _group;
 }
 
+template<typename A, typename value_type, typename domain_type>
+const std::vector<std::vector<value_type>>& Action<A,value_type,domain_type>::orbits() const {
+	if( _orbits.size() == 0 )
+		_orbits = static_cast<const A*>(this)->calculateOrbits();
+	return _orbits;
+}
+
+template<typename A, typename value_type, typename domain_type>
+std::vector<std::vector<value_type>> Action<A,value_type,domain_type>::calculateOrbits() const {
+	const A* a = static_cast<const A*>( this );
+	const auto& gens = group()->generators();
+	size_t n = a->domain().size();
+	size_t orbit_count = n;
+	std::map<value_type,int> elements;
+	UnionFind uf( n );
+	int i = 0;
+	for( const auto& x : a->domain() )
+		elements[ x ] = i++;
+	i = 0;
+	for( const auto& x : a->domain() )
+		for( const auto& g : gens )
+			orbit_count -= uf.cup( i++, elements[ a->act(g,x) ] );
+	std::vector<std::vector<value_type>> r( orbit_count );
+	std::map<int,int> indices;
+	i = 0;
+	orbit_count = 0;
+	for( const auto& x : a->domain() ) {
+		int j = uf.find( i );
+		if( i == j )
+			indices[j] = orbit_count++; 
+		r[indices[j]].push_back( x );
+	}
+	return r;
+}
+
+template<typename A, typename value_type, typename domain_type>
+bool Action<A,value_type,domain_type>::isTransitive() const {
+	return orbits().size() == 1;
+}
+
+template<typename A, typename value_type, typename domain_type>
+bool Action<A,value_type,domain_type>::isTrivial() const {
+	return static_cast<const A*>( this )->domain().size() == 1;
+}
+
+/*template<typename A, typename value_type, typename domain_type>
+Group Action<A,value_type,domain_type>::anonymize() const {
+	return static_cast<const A*>(this)->anonymize();
+}*/
+
+template<typename A, typename value_type, typename domain_type>
+value_type Action<A,value_type,domain_type>::operator()( const Permutation& sigma, const value_type& x ) const {
+	return static_cast<const A*>(this)->act( sigma, x );
+}
+
+template<typename A, typename value_type, typename domain_type>
+Action<A,value_type,domain_type>::Action( Group G ) : _group( G ) {
+}
+
+template<typename A, typename value_type, typename domain_type>
+RestrictedNaturalSetAction Action<A,value_type,domain_type>::systemOfImprimitivity() const {
+	RestrictedNaturalSetAction X( *static_cast<const A*>(this) );
+	RestrictedNaturalSetAction Y = X.randomBlocksystem();
+	while( not Y.isTrivial() ) {
+		X = std::move( Y );
+		Y = X.randomBlocksystem();
+	}
+	return X;
+}
+
+template<typename A, typename value_type, typename domain_type>
+template<typename T> 
+T Action<A,value_type,domain_type>::orbit( value_type seed ) const {
+	std::stack<value_type> to_do;
+	std::set<value_type> done;
+	to_do.emplace( std::move( seed ) );
+	while( not to_do.empty() ) {
+		value_type x = to_do.top();
+		to_do.pop();
+		for( const auto g : group()->generators() ) {
+			value_type y = operator()( g, x );
+			if( not done.count(y) ) {
+				done.insert( y );
+				to_do.emplace( std::move( y ) );
+			}
+		}
+	}
+	return T( done.begin(), done.end() );
+}
+
+template<typename A, typename value_type, typename domain_type>
+Group Action<A,value_type,domain_type>::kernel() const {
+	if( _kernel )
+		return _kernel;
+	const auto& d = static_cast<const A*>( this )->domain();
+	_kernel.reset( new Subgroup( group(), [d,this](const Permutation& sigma)->bool { 
+		for( const auto& x : d ) 
+			if( operator()( sigma, x ) != x ) 
+				return false; 
+		return true; 
+	} ) );
+	return _kernel;
+}
+
 // ----------------------------------------------------------------
 
-virtual size_t NaturalAction::domain_size() const {
-	return group()->degree();
-}
-
-virtual any_const_iterator NaturalAction::cbegin() const {
-	return range::iterator(0);
-}
-
-virtual any_const_iterator NaturalAction::cend() const {
-	return range::iterator( domain_size() );
-}
-
-virtual Group NaturalAction::anonymize() const {
-	return group();
-}
-
-virtual std::vector<std::vector<int>> NaturalAction::orbits() const {
-	size_t n = domain().size();
-	const auto& gens = group()->generators();
+template<typename A, typename value_type, typename domain_type>
+std::vector<std::vector<value_type>> PointAction<A,value_type,domain_type>::calculateOrbits() const {
+	size_t n = static_cast<const A*>(this)->domain().size();
+	const auto& gens = this->group()->generators();
 	UnionFind uf( n );
 	std::vector<std::vector<int>> r;
-	std::unordered_map<int,int> x;
-	for( int i = 0; i < n; i++ )
+	std::map<int,int> x;
+	for( size_t i = 0; i < n; i++ )
 		for( const auto& g : gens )
 			uf.cup( i, g(i) );
-	for( int i = 0; i < n; i++ ) {
+	for( auto i : static_cast<const A*>(this)->domain() ) {
 		int a = uf.find( i );
 		if( x.count( a ) == 0 ) {
 			x[a] = r.size();
-			r.emplace_back({ i });
+			r.push_back({ int(i) });
 		} else
 			r[x[a]].push_back( i );
 	}
 	return r;
 }
 
-virtual int NaturalAction::operator()( const Permutation& sigma, int x ) const {
+template<typename A, typename value_type, typename domain_type>
+RestrictedNaturalSetAction PointAction<A,value_type,domain_type>::randomBlocksystem() const {
+	size_t N = static_cast<const A*>(this)->domain().size();
+	size_t block_count;
+	std::stack<value_type> C;
+	UnionFind f( N );
+	std::vector<value_type> P_omega;
+	auto beg = static_cast<const A*>(this)->domain().cbegin();
+	auto end = static_cast<const A*>(this)->domain().cend();
+	int naught = *(beg++);
+	for( ; beg != end; beg++ ) {
+		int omega = *beg;
+		C.push( omega );
+		f.clear();
+		f.cup( naught, omega );
+		block_count = N-1;
+		while( !C.empty() ) {
+			int beta = C.top();
+			C.pop();
+			int alpha = f.find( beta );
+			for( const auto& g : this->group()->generators() ) {
+				int gamma = act( g, alpha );
+				int delta = act( g, beta );
+				if( f.find(gamma) != f.find(delta) ) {
+					C.push( std::max( f.find(gamma), f.find(delta) ) );
+					block_count -= f.cup( gamma, delta );
+				}
+			}
+		}
+		P_omega.resize( N / block_count );
+		int j = 0;
+		for( int i : static_cast<const A*>(this)->domain() )
+			if( f.find( i ) == 0 )
+				P_omega[j++] = i;
+		if( block_count != 1 )
+			break;
+	}
+	RestrictedNaturalSetAction::domain_type block_system = NaturalSetAction( this->group(), N, P_omega.size() ).orbit<RestrictedNaturalSetAction::domain_type>( P_omega );
+	return RestrictedNaturalSetAction( this->group(), std::move( block_system ) );
+}
+
+template<typename A, typename value_type, typename domain_type>
+value_type PointAction<A,value_type,domain_type>::act( const Permutation& sigma, value_type x ) const {
 	return sigma( x );
+}
+
+template<typename A, typename value_type, typename domain_type>
+PointAction<A,value_type,domain_type>::PointAction( Group G ) : Action<A,value_type,domain_type>( G ) {
 }
 
 // ----------------------------------------------------------------
 
+NaturalAction::domain_type NaturalAction::domain() const {
+	return range( 0, group()->degree() );
+}
+
+Group NaturalAction::anonymize() const {
+	return group();
+}
+
+// ----------------------------------------------------------------
+
+const RestrictedNaturalAction::domain_type& RestrictedNaturalAction::domain() const {
+	return Omega;
+}
+
+RestrictedNaturalAction::RestrictedNaturalAction( Group G, const RestrictedNaturalAction::domain_type& S ) : PointAction<RestrictedNaturalAction,RestrictedNaturalAction::value_type,RestrictedNaturalAction::domain_type>( G ), Omega( S ) {
+}
+
+
+
+/*std::vector<std::vector<NaturalAction::value_type>> NaturalAction::calculateOrbits() const {
+	size_t n = domain().size();
+	const auto& gens = group()->generators();
+	UnionFind uf( n );
+	std::vector<std::vector<int>> r;
+	std::map<int,int> x;
+	for( size_t i = 0; i < n; i++ )
+		for( const auto& g : gens )
+			uf.cup( i, g(i) );
+	for( size_t i = 0; i < n; i++ ) {
+		int a = uf.find( i );
+		if( x.count( a ) == 0 ) {
+			x[a] = r.size();
+			r.push_back({ int(i) });
+		} else
+			r[x[a]].push_back( i );
+	}
+	return r;
+}
+
+RestrictedNaturalSetAction NaturalAction::randomBlocksystem() const {
+	size_t N = domain().size();
+	size_t block_count;
+	std::stack<value_type> C;
+	UnionFind f( N );
+	std::vector<value_type> P_omega;
+	for( int omega : range( 1, N ) ) {
+		C.push( omega );
+		f.clear();
+		f.cup( 0, omega );
+		block_count = N;
+		while( !C.empty() ) {
+			int beta = C.top();
+			C.pop();
+			int alpha = f.find( beta );
+			for( const auto& g : group()->generators() ) {
+				int gamma = act( g, alpha );
+				int delta = act( g, beta );
+				if( f.find(gamma) != f.find(delta) ) {
+					C.push( std::max( f.find(gamma), f.find(delta) ) );
+					block_count -= f.cup( gamma, delta );
+				}
+			}
+		}
+		P_omega.resize( N / block_count );
+		int j = 0;
+		for( int i : domain() )
+			if( f.find( i ) == 0 )
+				P_omega[j++] = i;
+		if( block_count != 1 )
+			break;
+	}
+	RestrictedNaturalSetAction::domain_type block_system = NaturalSetAction( group(), N, P_omega.size() ).orbit<RestrictedNaturalSetAction::domain_type>( P_omega );
+	return RestrictedNaturalSetAction( group(), std::move( block_system ) );
+}
+
+NaturalAction::value_type NaturalAction::act( const Permutation& sigma, NaturalAction::value_type x ) const {
+	return sigma( x );
+}*/
+
+NaturalAction::NaturalAction( Group G ) : PointAction<NaturalAction,NaturalAction::value_type,NaturalAction::domain_type>( G ) {
+}
+
+// ----------------------------------------------------------------
+/*
 template<size_t k>
 size_t NaturalArrayAction::subdomain_size() const {
 	return group()->degree();
@@ -184,25 +467,113 @@ virtual value_type NaturalArrayAction::operator()( const Permutation& sigma, con
 	for( size_t i = 0; i < k; ++i )
 		r[i] = sigma( x[i] );
 	return r;
+}*/
+
+// ----------------------------------------------------------------
+
+
+
+// ----------------------------------------------------------------
+
+template<typename A, typename value_type, typename domain_type>
+value_type SetAction<A,value_type,domain_type>::act( const Permutation& sigma, const value_type& x ) const {
+	value_type r( k );
+	for( int i = 0; i < k; ++i )
+		r[i] = sigma( x[i] );
+	std::sort( r.begin(), r.end() );
+	return r;
+}
+
+template<typename A, typename value_type, typename domain_type>
+SetAction<A,value_type,domain_type>::SetAction( Group G, int set_size ) : Action<A,value_type,domain_type>( G ) {
+	k = set_size;
 }
 
 // ----------------------------------------------------------------
 
-size_t NaturalSetAction::subdomain_size() const {
-	return group()->degree();
+NaturalSetAction::domain_type NaturalSetAction::domain() const {
+	return domain_type( subdomain().size(), k );
 }
 
-virtual size_t NaturalSetAction::domain_size() const {
-	return binom( subdomain_size(), k );
+range NaturalSetAction::subdomain() const {
+	return range( 0, n );
 }
 
-virtual any_const_iterator NaturalSetAction::cbegin() const {
-	return all_ordered_tuples( subdomain_size(), k ).begin();
+NaturalSetAction::NaturalSetAction( Group G, int subdomain_size, int set_size ) : SetAction<NaturalSetAction,NaturalSetAction::value_type,NaturalSetAction::domain_type>( G, set_size ) {
+	n = subdomain_size;
 }
 
-virtual any_const_iterator NaturalSetAction::cend() const {
-	return all_ordered_tuples( subdomain_size(), k ).end();
+// ----------------------------------------------------------------
+
+const RestrictedNaturalSetAction::domain_type& RestrictedNaturalSetAction::domain() const {
+	return Omega;
 }
+
+RestrictedNaturalSetAction::RestrictedNaturalSetAction( Group G, domain_type D ) : SetAction<RestrictedNaturalSetAction,RestrictedNaturalSetAction::value_type,RestrictedNaturalSetAction::domain_type>( G, D[0].size() ) {
+	Omega = std::move( D );
+}
+
+RestrictedNaturalSetAction::RestrictedNaturalSetAction( const NaturalAction& X ) : SetAction<RestrictedNaturalSetAction,RestrictedNaturalSetAction::value_type,RestrictedNaturalSetAction::domain_type>( X.group(), 1 ) {
+	for( auto x : X.domain() )
+		Omega.push_back( {x} );
+}
+
+
+RestrictedNaturalSetAction RestrictedNaturalSetAction::randomBlocksystem() const {
+	size_t N = domain().size();
+	size_t block_count;
+	std::stack<int> C;
+	UnionFind f( N );
+	std::vector<value_type> P_omega;
+	std::map<value_type,int> inverse_domain;
+	for( size_t i = 0; i < N; i++ )
+		inverse_domain[ domain()[ i ] ] = i;
+	for( int omega : range( 1, N ) ) {
+		C.push( omega );
+		f.clear();
+		f.cup( 0, omega );
+		block_count = N-1;
+		while( !C.empty() ) {
+			int beta = C.top();
+			C.pop();
+			int alpha = f.find( beta );
+			for( const auto& g : group()->generators() ) {
+				int gamma = inverse_domain[ act( g, domain()[alpha] ) ];
+				int delta = inverse_domain[ act( g, domain()[beta] ) ];
+				if( f.find(gamma) != f.find(delta) ) {
+					C.push( std::max( f.find(gamma), f.find(delta) ) );
+					block_count -= f.cup( gamma, delta );
+				}
+			}
+		}
+		P_omega.resize( N / block_count );
+		int j = 0;
+		for( size_t i = 0; i < N; i++ )
+			if( f.find( i ) == 0 )
+				P_omega[j++] = domain()[i];
+		if( block_count != 1 )
+			break;
+	}
+	NaturalSetAction::value_type S = flatten( P_omega );
+	std::sort( S.begin(), S.end() );
+	RestrictedNaturalSetAction::domain_type block_system = NaturalSetAction( group(), N, S.size() ).orbit<RestrictedNaturalSetAction::domain_type>( S );
+	return RestrictedNaturalSetAction( group(), std::move( block_system ) );
+}
+
+// ----------------------------------------------------------------
+
+
+
+
+/*NaturalSetAction::domain_type NaturalSetAction::domain() const {
+	return all_ordered_tuples( subdomain().size(), k );
+}
+
+range NaturalSetAction::subdomain() const {
+	return range( 0, group()->degree() );
+}
+
+
 
 virtual std::vector<std::vector<value_type>> NaturalSetAction::orbits() const {
 	size_t n = subdomain_size();
@@ -241,7 +612,7 @@ virtual Group NaturalSetAction::anonymize() const {
 	for( const Permutation& g : group()->generators() ) {
 		permutation_map.reserve( nck );
 		for( const auto& tup : *this ) {
-			target = (*this)( g, tup );
+			target = act( g, tup );
 			order.push_back( polynomial_evaluation( target, n ) );
 		}
 		new_generators.emplace_back( std::move( index_sort( order ) ) );
@@ -249,9 +620,10 @@ virtual Group NaturalSetAction::anonymize() const {
 	return new Subgroup( new SymmetricGroup( nck ), new_generators ); 
 }
 
-virtual value_type NaturalArrayAction::operator()( const Permutation& sigma, const value_type& x ) const {
-	value_type r( k );
+NaturalArrayAction::value_type NaturalArrayAction::act( const Permutation& sigma, const value_type& x ) const {
+	NaturalArrayAction::value_type r( k );
 	for( size_t i = 0; i < k; ++i )
 		r[i] = sigma( x[i] );
+	std::sort( r.begin(), r.end() );
 	return r;
-}
+}*/

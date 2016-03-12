@@ -3,6 +3,7 @@
 #include <initializer_list>
 #include <exception>
 #include <stdexcept>
+#include <algorithm>
 
 int Permutation::degree() const {
 	return _map.size();
@@ -120,14 +121,18 @@ Permutation Permutation::inverse() const {
 	return Permutation( std::move( v ) );
 }
 
-Permutation::Permutation( std::vector<int>&& m ) {
-	_order = -1;
-	_map = m;
+Permutation::Permutation( int n ) : _order( 1 ) {
+	if( n <= 0 )
+		n = 0;
+	_map.resize( n );
+	for( int i = 0; i < n; i++ )
+		_map[i] = i;
 }
 
-Permutation::Permutation( std::initializer_list<int> l ) {
-	_order = -1;
-	_map = std::vector<int>( l );
+Permutation::Permutation( std::vector<int>&& m ) : _map( m ), _order( -1 )  {
+}
+
+Permutation::Permutation( std::initializer_list<int> l ) : _map( l ), _order( -1 ) {
 }
 
 std::ostream& operator<<( std::ostream& os, const Permutation& sigma ) {
@@ -141,4 +146,51 @@ std::ostream& operator<<( std::ostream& os, const Permutation& sigma ) {
 		os << ")";
 	}
 	return os;
+}
+
+// ----------------------------------------------------------------------------
+
+all_permutations::iterator::iterator( int n ) : _n(n), _p(_n) {
+}
+
+all_permutations::iterator::iterator( const self_type& other ) : _n( other._n ), _p( other._p ) {
+}
+
+all_permutations::iterator::self_type all_permutations::iterator::operator++(int) { 
+	self_type i = *this; 
+	++(*this); 
+	return i; 
+}
+
+all_permutations::iterator::self_type& all_permutations::iterator::operator++() {
+	if( !std::next_permutation( _p._map.begin(), _p._map.end() ) )
+		_n = -1;
+	return *this;
+}
+
+all_permutations::iterator::reference all_permutations::iterator::operator*() { 
+	return _p; 
+}
+
+all_permutations::iterator::pointer all_permutations::iterator::operator->() { 
+	return &_p; 
+}
+
+bool all_permutations::iterator::operator==(const self_type& rhs) { 
+	return _n == rhs._n && _p == rhs._p;; 
+}
+
+bool all_permutations::iterator::operator!=(const self_type& rhs) { 
+	return _n != rhs._n || _p != rhs._p; 
+}
+
+all_permutations::iterator all_permutations::begin() { 
+	return iterator( _n ); 
+}
+
+all_permutations::iterator all_permutations::end() { 
+	return iterator( -1 ); 
+}
+
+all_permutations::all_permutations( int n ) : _n(n) {
 }

@@ -3,6 +3,7 @@
 #include <set>
 #include <map>
 #include "ext.h"
+#include "permutation.h"
 
 size_t RelationalStructure::c( const std::vector<int>& t ) const {
 	for( size_t i = 0; i < _relations.size(); i++ )
@@ -258,7 +259,7 @@ std::vector<std::set<int>> connectedComponents( int n, const std::set<std::vecto
 	return connected_components;
 }
 
-Either<Either<ColoredPartition,RelationalStructure>,std::vector<int>> splitOrUPCC_subroutine( const RelationalStructure& XS, double alpha ) {
+Either<Either<ColoredPartition,RelationalStructure>,Empty> splitOrUPCC_subroutine( const RelationalStructure& XS, double alpha ) {
 	size_t n = XS.domainSize();
 	size_t m = n * alpha;
 	std::vector<int> CS;
@@ -275,6 +276,7 @@ Either<Either<ColoredPartition,RelationalStructure>,std::vector<int>> splitOrUPC
 			if( block.size() > m ) {
 				violating_relation = i;
 				violating_coloring = coloring.size();
+				break;
 			}
 			std::vector<std::set<int>> color;
 			color.emplace_back( std::move( block ) );
@@ -304,7 +306,7 @@ Either<Either<ColoredPartition,RelationalStructure>,std::vector<int>> splitOrUPC
 	if( Xstar.relations().size() >= 3 ) // Xstar is uniprimitive
 		return Either<ColoredPartition,RelationalStructure>( Xstar );
 	else
-		return CS;
+		return Empty();
 }
 
 Either<ColoredPartition,RelationalStructure> splitOrUPCC( const RelationalStructure& X, double alpha ) {
@@ -312,22 +314,14 @@ Either<ColoredPartition,RelationalStructure> splitOrUPCC( const RelationalStruct
 	int n = X.domainSize();
 	RelationalStructure X0 = X;
 	X0.WeisfellerLeman();
-	auto r = splitOrUPCC_subroutine( X0, alpha );
-	std::vector<int> C;
-	if( r.isFirst() )
-		return r.getFirst();
-	else
-		C = r.getSecond();
-	for( int i = 1; i < k; i++ ) {
-		for( auto& S : all_ordered_tuples( n, i ) ) {
-			auto XS = X;
-			XS.individualize( S );
-			auto q = splitOrUPCC_subroutine( XS, alpha );
-			if( q.isFirst() )
-				return q.getFirst();
-		}
+	for( auto& S : all_ordered_tuples( n, k-1 ) ) {
+		auto XS = X0;
+		XS.individualize( S );
+		auto q = splitOrUPCC_subroutine( XS, alpha );
+		if( q.isFirst() )
+			return q.getFirst();
 	}
-	throw;
+	throw std::range_error( "Insufficient symmetric defect in X!" );
 }
 
 Either<ColoredPartition,JohnsonScheme> bipartiteSplitOrJohnson( const BipartiteGraph& G, double alpha, int C0 ) {
@@ -360,13 +354,13 @@ Either<ColoredPartition,JohnsonScheme> bipartiteSplitOrJohnson( const BipartiteG
 			// apply vertex refinement
 			// recurse
 		}
-		return;
+		// return ColoredPartition();
 	}
 	// 3.
-	RelationalStructure X( G );
-	X.WeisfellerLeman();
-	RelationalStructure X1 = X.skeletalSubstructure( 2, V1 );
-	RelationalStructure X2 = X.skeletalSubstructure( 2, V2 );
+	// RelationalStructure X( G );
+	// X.WeisfellerLeman();
+	// RelationalStructure X1 = X.skeletalSubstructure( 2, V1 );
+	// RelationalStructure X2 = X.skeletalSubstructure( 2, V2 );
 	// 4.
 	
 }

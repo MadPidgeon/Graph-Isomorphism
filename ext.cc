@@ -39,6 +39,10 @@ bool range::iterator::operator!=(const self_type& rhs) {
 	return _i != rhs._i; 
 }
 
+size_t range::size() const {
+	return _m-_n;
+}
+
 range::iterator range::begin() { 
 	return iterator( _n ); 
 }

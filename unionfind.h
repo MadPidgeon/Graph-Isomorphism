@@ -7,7 +7,7 @@ class UnionFind {
 	int* set;
 	public:
 	int find( int s ) const;
-	void cup( int, int );
+	bool cup( int, int );
 	void clear();
 	UnionFind( int n );
 	~UnionFind();

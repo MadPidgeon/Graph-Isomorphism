@@ -7,6 +7,7 @@
 #include <iostream>
 #include <array>
 #include <memory>
+#include <deque>
 
 template<typename T>
 std::ostream& operator<<( std::ostream& os, const std::set<T>& s ) {
@@ -32,6 +33,20 @@ std::ostream& operator<<( std::ostream& os, const std::vector<T>& s ) {
 		while( (++x) != s.end() )
 			os << "," << (*x);
 		os << "]";
+	}
+	return os;
+}
+
+template<typename T>
+std::ostream& operator<<( std::ostream& os, const std::deque<T>& s ) {
+	if( s.empty() )
+		os << "Ø";
+	else {
+		auto x = s.begin();
+		os << "\u00AB" << (*x);
+		while( (++x) != s.end() )
+			os << "," << (*x);
+		os << "\u00BB";
 	}
 	return os;
 }
@@ -194,6 +209,7 @@ public:
 	};
 	iterator begin();
 	iterator end();
+	size_t size() const;
 	range( int n, int m );
 };
 
@@ -319,6 +335,8 @@ public:
 	all_ordered_tuples( int n, int r );
 };
 
+
+
 int pow(int,int);
 
 template<typename T>
@@ -349,6 +367,13 @@ template<typename T> std::set<T> flatten( const std::set<std::set<T>>& s ) {
 	std::set<T> t;
 	for( const auto& u : s )
 		t.insert( u.begin(), u.end() );
+	return t;
+}
+
+template<typename T> std::vector<T> flatten( const std::vector<std::vector<T>>& s ) {
+	std::vector<T> t;
+	for( const auto& u : s )
+		t.insert( t.end(), u.begin(), u.end() );
 	return t;
 }
 

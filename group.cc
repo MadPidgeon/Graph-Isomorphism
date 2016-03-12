@@ -38,7 +38,6 @@ _Group::~_Group() {
 
 bool Subgroup::contains( const Permutation& alpha ) const {
 	#warning ("Using membership testing")
-	__asm("int $3\n\t");
 	if( !_fhl )
 		_fhl.create( this );
 	return _fhl.contains( alpha );
@@ -96,7 +95,7 @@ Subgroup::Subgroup( Group G, std::function<bool(Permutation)> c ) {
 	bool change = true;
 	while( change ) {
 		change = false;
-		int q = 0;
+		//int q = 0;
 		//std::cout << "!" << std::endl;
 		for( int i = 0; i < n; i++ )
 			for( int j = 0; j <= i; j++ )
@@ -105,8 +104,8 @@ Subgroup::Subgroup( Group G, std::function<bool(Permutation)> c ) {
 						/*std::cout << a << "~" << b << std::endl;
 						for( int q = 0; q < reps.size(); q++ )
 							std::cout << "Q" << q << ": " << reps[q] << std::endl;*/
-						if( (q++) % 10000 == 0 )
-							std::cout << reps[0].size() << std::endl;
+						/*if( (q++) % 10000 == 0 )
+							std::cout << reps[0].size() << std::endl;*/
 						change |= _filter( a*b, reps, c );
 					}
 	}
