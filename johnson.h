@@ -39,3 +39,4 @@
 std::vector<int> JordanLiebeckSet( RestrictedNaturalSetAction, int x );
 RestrictedNaturalSetAction JohnsonStandardBlocks( RestrictedNaturalSetAction phi );
 RestrictedNaturalSetAction CameronReduction( NaturalAction phi );
+std::deque<std::vector<int>> CameronReductionPart( std::vector<std::array<int,2>>::const_iterator beg, std::vector<std::array<int,2>>::const_iterator end, const std::unordered_map<int,std::deque<int>>& Delta, int n );

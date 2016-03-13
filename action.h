@@ -12,6 +12,7 @@
 #include "ext.h"
 #include "unionfind.h"
 #include "group.h"
+#include "multi.h"
 
 template<typename T>
 using action_set = std::vector<T>;
@@ -531,12 +532,11 @@ std::vector<std::vector<typename NaturalArrayAction<k>::value_type>> NaturalArra
 		}
 		i++;
 	}
-	std::cout << "yo" << std::endl;
 	std::unordered_map<int,int> indices;
 	i = 0;
 	int j = 0;
 	r.resize( c );
-	for( const auto& x : all_arrays<k>( n ) ) {
+	for( const auto& x : domain() ) {
 		int a = uf.find( i++ );
 		if( indices.count(a) == 0 )
 			indices[a] = j++;

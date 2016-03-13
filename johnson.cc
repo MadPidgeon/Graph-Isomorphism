@@ -5,41 +5,29 @@
 #include "group.h"
 #include "action.h"
 #include "ext.h"
+#include "multi.h"
 
-RestrictedNaturalSetAction CameronReduction( NaturalAction phi ) {
-	int n = phi.domain().size();
-	std::cerr << "M" ;
-	NaturalArrayAction<2> psi( phi.group() );
-	std::cerr << "E" ;
-	auto orbitals = psi.orbits();
-	std::sort( orbitals.begin(), orbitals.end(), size_compare<std::vector<NaturalArrayAction<2>::value_type>> );
-	const auto& Gamma = orbitals[1];
-	const auto& Delta_prime = orbitals.back();
-	std::unordered_map<int,std::deque<int>> Delta;
-	for( const auto& delta : Delta_prime )
-		Delta[delta[0]].push_back( delta[1] );
+std::deque<std::vector<int>> CameronReductionPart( std::vector<std::array<int,2>>::const_iterator beg, std::vector<std::array<int,2>>::const_iterator end, const std::unordered_map<int,std::deque<int>>& Delta, int n ) {
+	int counter = 0;
 	std::vector<bool> B(n);
 	std::vector<bool> C_prime(n);
 	size_t setsize = 0;
 	std::vector<int> C;
 	std::deque<std::vector<int>> D_prime;
-	std::cerr << "|Gamma|=" << Gamma.size() << std::endl; 
-	std::cerr << "|Delta|=" << Delta_prime.size() << std::endl; 
-	int counter = 0;
-	for( const auto& p : Gamma ) {
-		if( (++counter) % 1000 )
+	for( ; beg != end; beg++ ) {
+		if( (++counter) % 100 == 0 )
 			std::cerr << counter << std::endl; 
-		int x = p[0];
-		int y = p[1];
+		int x = beg->at(0);
+		int y = beg->at(1);
 		B.assign( n, false );
 		C_prime.assign( n, true );
-		for( int q : Delta[y] )
+		for( int q : Delta.at(y) )
 			B[q] = true;
-		for( int q : Delta[x] )
+		for( int q : Delta.at(x) )
 			B[q] = false;
 		for( int z = 0; z < n; z++ )
 			if( B[z] )
-				for( int q : Delta[z] )
+				for( int q : Delta.at(z) )
 					C_prime[q] = false;
 		C.reserve( setsize );
 		for( int i = 0; i < n; i++ )
@@ -49,6 +37,37 @@ RestrictedNaturalSetAction CameronReduction( NaturalAction phi ) {
 		if( std::find( D_prime.begin(), D_prime.end(), C ) == D_prime.end() )
 			D_prime.emplace_back( std::move( C ) );
 	}
+	return D_prime;
+}
+
+RestrictedNaturalSetAction CameronReduction( NaturalAction phi ) {
+	int n = phi.domain().size();
+	NaturalArrayAction<2> psi( phi.group() );
+	auto orbitals = psi.orbits();
+	std::cerr << "orbitals done" << std::endl;
+	std::sort( orbitals.begin(), orbitals.end(), size_compare<std::vector<NaturalArrayAction<2>::value_type>> );
+	const auto& Gamma = orbitals[1];
+	const auto& Delta_prime = orbitals.back();
+	std::unordered_map<int,std::deque<int>> Delta;
+	for( const auto& delta : Delta_prime )
+		Delta[delta[0]].push_back( delta[1] );
+	std::deque<std::vector<int>> D_prime;
+	std::cerr << "|Gamma|=" << Gamma.size() << std::endl; 
+	std::cerr << "|Delta|=" << Delta_prime.size() << std::endl; 
+	#ifdef THREADED
+	std::future<std::deque<std::vector<int>>> res[THREADS];
+	auto beg = Gamma.cbegin();
+	auto end = Gamma.cbegin();
+	for( size_t i = 0; i < THREADS-1; i++ ) {
+		end += Gamma.size()/THREADS;
+		res[i] = std::async( CameronReductionPart, beg, end, Delta, n );
+		beg = end;
+	}
+	auto resl = CameronReductionPart( end, Gamma.cend(), Delta, n );
+	#else
+	auto res = CameronReductionPart( Gamma.cbegin(), Gamma.cend(), Delta, n );
+	#endif
+
 	std::cout << "Done" << std::endl;
 	return RestrictedNaturalSetAction( phi.group(), D_prime );
 
