@@ -34,7 +34,7 @@ public:
 	template<typename T = action_set<value_type>> T orbit( value_type seed ) const;
 	const std::vector<std::vector<value_type>>& orbits() const;
 	std::vector<std::vector<value_type>> calculateOrbits() const;
-	Group anonymize() const;
+	Group anonymize( std::map<value_type,int>* inv_map = nullptr ) const;
 	bool isTransitive() const;
 	bool isTrivial() const;
 	Group kernel() const;
@@ -73,6 +73,7 @@ private:
 public:
 	const domain_type& domain() const;
 	RestrictedNaturalAction( Group G, const domain_type& S );
+	RestrictedNaturalAction( Group G, domain_type&& S );
 };
 
 template<typename A, typename value_type, typename domain_type, int k>
@@ -127,7 +128,8 @@ public:
 	const domain_type& domain() const;
 	RestrictedNaturalSetAction randomBlocksystem() const;
 	RestrictedNaturalSetAction( const NaturalAction& );
-	RestrictedNaturalSetAction( Group G, domain_type D );
+	RestrictedNaturalSetAction( Group G, const domain_type& D );
+	RestrictedNaturalSetAction( Group G, domain_type&& D );
 };
 
 // ----------------------------------------------------------------
@@ -156,9 +158,11 @@ std::vector<std::vector<value_type>> Action<A,value_type,domain_type>::calculate
 	for( const auto& x : a->domain() )
 		elements[ x ] = i++;
 	i = 0;
-	for( const auto& x : a->domain() )
+	for( const auto& x : a->domain() ) { 
 		for( const auto& g : gens )
-			orbit_count -= uf.cup( i++, elements[ a->act(g,x) ] );
+			orbit_count -= uf.cup( i, elements[ a->act(g,x) ] );
+		i++;
+	}
 	std::vector<std::vector<value_type>> r( orbit_count );
 	std::map<int,int> indices;
 	i = 0;
@@ -168,6 +172,7 @@ std::vector<std::vector<value_type>> Action<A,value_type,domain_type>::calculate
 		if( i == j )
 			indices[j] = orbit_count++; 
 		r[indices[j]].push_back( x );
+		i++;
 	}
 	return r;
 }
@@ -237,21 +242,25 @@ Group Action<A,value_type,domain_type>::kernel() const {
 }
 
 template<typename A, typename value_type, typename domain_type>
-Group Action<A,value_type,domain_type>::anonymize() const {
+Group Action<A,value_type,domain_type>::anonymize( std::map<value_type,int>* inverse_map ) const {
 	int n = static_cast<const A*>(this)->domain().size();
 	Group S_n( new SymmetricGroup( n ) );
-	std::map<value_type,int> inverse_map;
+	bool own_map = false;
+	if( not inverse_map )
+		inverse_map = new std::map<value_type,int>();
 	std::vector<Permutation> generators;
 	int i = 0;
 	for( const auto& x : static_cast<const A*>(this)->domain() )
-		inverse_map[ x ] = i++;
+		(*inverse_map)[ x ] = i++;
 	for( const Permutation& sigma : group()->generators() ) {
 		std::vector<int> generator(n);
 		i = 0;
 		for( const auto& x : static_cast<const A*>(this)->domain() )
-			generator[i++] = inverse_map[ operator()( sigma, x ) ];
+			generator[i++] = (*inverse_map)[ operator()( sigma, x ) ];
 		generators.emplace_back( std::move( generator ) );
 	}
+	if( own_map )
+		delete inverse_map;
 	return Group( new Subgroup( S_n, generators ) );
 }
 

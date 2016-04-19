@@ -6,7 +6,7 @@
 #include "action.h"
 #include "ext.h"
 #include "multi.h"
-
+/*
 std::deque<std::vector<int>> CameronReductionPart( std::vector<std::array<int,2>>::const_iterator beg, std::vector<std::array<int,2>>::const_iterator end, const std::unordered_map<int,std::deque<int>>& Delta, int n ) {
 	int counter = 0;
 	std::vector<bool> B(n);
@@ -55,18 +55,29 @@ RestrictedNaturalSetAction CameronReduction( NaturalAction phi ) {
 	std::cerr << "|Gamma|=" << Gamma.size() << std::endl; 
 	std::cerr << "|Delta|=" << Delta_prime.size() << std::endl; 
 	#ifdef THREADED
-	std::future<std::deque<std::vector<int>>> res[THREADS];
+	std::cerr << THREADS << std::endl;
+	std::future<std::deque<std::vector<int>>> fut[THREADS];
 	auto beg = Gamma.cbegin();
 	auto end = Gamma.cbegin();
 	for( size_t i = 0; i < THREADS-1; i++ ) {
 		end += Gamma.size()/THREADS;
-		res[i] = std::async( CameronReductionPart, beg, end, Delta, n );
+		fut[i] = std::async( CameronReductionPart, beg, end, Delta, n );
 		beg = end;
 	}
-	auto resl = CameronReductionPart( end, Gamma.cend(), Delta, n );
+	std::deque<std::vector<int>> res = CameronReductionPart( end, Gamma.cend(), std::cref( Delta ), n );
+	for( size_t i = 0; i < THREADS-1; i++ ) {
+		std::deque<std::vector<int>> res2 = fut[i].get();
+		for( auto& r : res2 )
+			if( std::find( res.begin(), res.end(), r ) == res.end() )
+				res.emplace_back( std::move( r ) );
+	}
 	#else
-	auto res = CameronReductionPart( Gamma.cbegin(), Gamma.cend(), Delta, n );
+	std::deque<std::vector<int>> res = CameronReductionPart( Gamma.cbegin(), Gamma.cend(), std::cref( Delta ), n );
 	#endif
+	std::cout << res << std::endl;
+	RestrictedNaturalSetAction chi( std::move( res ) );
+	RestrictedNaturalSetAction psi = chi.reverseSystemOfImprimitivity();
+
 
 	std::cout << "Done" << std::endl;
 	return RestrictedNaturalSetAction( phi.group(), D_prime );
@@ -83,7 +94,7 @@ RestrictedNaturalSetAction CameronReduction( NaturalAction phi ) {
 	return Action<std::set<T>>( chi_prime.group(), D, chi_prime.function() );*/
 
 	//return RestrictedNaturalSetAction( phi.group(), std::deque<std::vector<int>>( 1, std::vector<int>( 1, 0 ) ) );
-}
+//}
 
 /*std::vector<int> JordanLiebeckSet( RestrictedNaturalSetAction phi, int x ) {
 	Group Gx = phi.group().stabilizer(x);
@@ -125,3 +136,48 @@ RestrictedNaturalSetAction JohnsonStandardBlocks( RestrictedNaturalSetAction phi
 	return RestrictedNaturalSetAction( G, blocks );
 }*/
 
+std::vector<std::vector<int>> JordanLiebeckSet( RestrictedNaturalSetAction phi, int x ) {
+	Group Gx = phi.group()->stabilizer(x);
+	// std::cout << Gx->generators() << std::endl;
+	RestrictedNaturalSetAction phi_prime( Gx, phi.domain() );
+	std::vector<std::vector<std::vector<int>>> O = phi_prime.orbits();
+	// std::cout << O << std::endl;
+	size_t largest_size = 0;
+	size_t largest = 0;
+	int n = 0;
+	for( size_t i = 0; i < O.size(); i++ ) {
+		n += O[i].size();
+		if( O[i].size() > largest_size ) {
+			largest_size = O[i].size();
+			largest = i;
+		}
+	}
+	std::vector<std::vector<int>> Delta;
+	// Delta.reserve( n - largest_size );
+	for( size_t i = 0; i < O.size(); i++ )
+		if( i != largest )
+			Delta.insert( Delta.end(), O[i].begin(), O[i].end() );
+	std::sort( Delta.begin(), Delta.end() );
+	return Delta;
+}
+
+
+RestrictedNaturalSetAction JohnsonStandardBlocks( RestrictedNaturalSetAction phi ) {
+	Group G = phi.group();
+	const auto& Omega = G->domain();
+	std::map<std::vector<std::vector<int>>,std::vector<int>> equivalence_map;
+	for( int x : Omega ) {
+		std::cout << x << std::endl;
+		std::vector<std::vector<int>> Tx = JordanLiebeckSet( phi, x );
+		std::cout << Tx << std::endl;
+		equivalence_map[Tx].push_back( x );
+		/*if( equivalence_map.count( Tx ) == 0 )
+			equivalence_map.insert( Tx, std::vector<int>({ x }) );
+		else
+			equivalence_map[Tx].push_back( x );*/
+	}
+	std::deque<std::vector<int>> blocks;
+	for( auto& partition : equivalence_map )
+		blocks.emplace_back( std::move( partition.second ) );
+	return RestrictedNaturalSetAction( G, blocks );
+}

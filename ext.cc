@@ -62,6 +62,11 @@ all_tuples::iterator::iterator( const self_type& other ) {
 	_tuple = other._tuple;
 }
 
+size_t all_tuples::size() const {
+	return pow( _n, _r );
+}
+
+
 all_tuples::iterator::self_type all_tuples::iterator::operator++(int) { 
 	self_type i = *this; 
 	++(*this); 
@@ -166,6 +171,11 @@ all_ordered_tuples::iterator all_ordered_tuples::end() {
 	return iterator( -1, _r ); 
 }
 
+size_t all_ordered_tuples::size() const {
+	return binom( _n, _r );
+}
+
+
 all_ordered_tuples::all_ordered_tuples( int n, int r ) : _n(n), _r(r) {}
 
 int pow( int n, int k ) {
@@ -194,4 +204,26 @@ uint binom( int n, int k ) {
 			ans = (ans*n)/j;
 	}
 	return ans;
+}
+
+bool bipartiteMatching_Subroutine( const matrix<bool>& M, int p, std::vector<bool>& seen, std::vector<int>& match ) {
+	for( int q : range( 0, M.height() ) ) {
+		if( M.at(p,q) and not seen.at(q) ) {
+			seen.at(q) = true;
+			if( match.at(q) < 0 or bipartiteMatching_Subroutine( M, match.at(q), seen, match ) ) {
+				match.at(q) = p;
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+std::vector<int> bipartiteMatching( const matrix<bool>& M ) {
+	std::vector<int> match( M.width(), -1 );
+	for( int p : range( 0, M.height() ) ) {
+		std::vector<bool> seen( M.width(), false );
+		bipartiteMatching_Subroutine( M, p, seen, match );
+	}
+	return match;
 }

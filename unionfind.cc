@@ -29,6 +29,13 @@ void UnionFind::clear() {
 		set[i] = i;
 }
 
+bool UnionFind::isUniform() const {
+	for( int i = 0; i < N; ++i )
+		if( find( i ) != 0 )
+			return false;
+	return true;
+}
+
 UnionFind::UnionFind( int n ) {
 	N = n;
 	set = new int[N];

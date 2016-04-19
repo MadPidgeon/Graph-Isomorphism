@@ -21,6 +21,7 @@ public:
 	virtual std::vector<Permutation> generators() const = 0;
 	Group share() const;
 	Permutation one() const;
+	Group stabilizer( int x ) const;
 	bool hasSubgroup( Group H ) const;
 	bool equals( Group H ) const;
 	std::vector<int> domain() const;

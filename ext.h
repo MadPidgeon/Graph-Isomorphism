@@ -8,6 +8,8 @@
 #include <array>
 #include <memory>
 #include <deque>
+#include <unordered_map>
+#include "matrix.h"
 
 template<typename T>
 std::ostream& operator<<( std::ostream& os, const std::set<T>& s ) {
@@ -67,6 +69,20 @@ std::ostream& operator<<( std::ostream& os, const std::array<T,k>& s ) {
 
 template<typename T, typename U>
 std::ostream& operator<<( std::ostream& os, const std::map<T,U>& s ) {
+	if( s.empty() )
+		os << "Ø";
+	else {
+		auto x = s.begin();
+		os << "{" << x->first << " -> " << x->second;
+		while( (++x) != s.end() )
+			os << "," << x->first << " -> " << x->second;
+		os << "}";
+	}
+	return os;
+}
+
+template<typename T, typename U>
+std::ostream& operator<<( std::ostream& os, const std::unordered_map<T,U>& s ) {
 	if( s.empty() )
 		os << "Ø";
 	else {
@@ -195,6 +211,7 @@ public:
 	};
 	iterator begin();
 	iterator end();
+	size_t size() const;
 	all_tuples( int n, int r );
 };
 
@@ -352,6 +369,7 @@ public:
 	};
 	iterator begin();
 	iterator end();
+	size_t size() const;
 	all_ordered_tuples( int n, int r );
 };
 
@@ -471,3 +489,5 @@ public:
 		return not(*this == r);
 	}
 };
+
+std::vector<int> bipartiteMatching( const matrix<bool>& M );

@@ -51,12 +51,14 @@ void matrix<T>::resize( int height, int width ) {
 
 template<typename T> 
 void matrix<T>::print( std::ostream& os ) const {
+	os << "[";
 	for( int i = 0; i < height(); i++ ) {
-		if( i != 0 )
-			os << std::endl;
-		for( int j = 0; j < width(); j++ )
-			os << at(i,j) << " ";
+		os << "[" << at(i,0);
+		for( int j = 1; j < width(); j++ )
+			os << "," << at(i,j);
+		os << "]," << std::endl;
 	}
+	os << "]";
 }
 
 template<typename T> 

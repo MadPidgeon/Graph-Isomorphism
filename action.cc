@@ -34,6 +34,10 @@ const RestrictedNaturalAction::domain_type& RestrictedNaturalAction::domain() co
 RestrictedNaturalAction::RestrictedNaturalAction( Group G, const RestrictedNaturalAction::domain_type& S ) : PointAction<RestrictedNaturalAction,RestrictedNaturalAction::value_type,RestrictedNaturalAction::domain_type>( G ), Omega( S ) {
 }
 
+RestrictedNaturalAction::RestrictedNaturalAction( Group G, RestrictedNaturalAction::domain_type&& S ) : PointAction<RestrictedNaturalAction,RestrictedNaturalAction::value_type,RestrictedNaturalAction::domain_type>( G ), Omega( std::move( S ) ) {
+}
+
+
 // ----------------------------------------------------------------
 
 /*std::vector<std::vector<NaturalAction::value_type>> NaturalAction::calculateOrbits() const {
@@ -116,7 +120,11 @@ const RestrictedNaturalSetAction::domain_type& RestrictedNaturalSetAction::domai
 	return Omega;
 }
 
-RestrictedNaturalSetAction::RestrictedNaturalSetAction( Group G, domain_type D ) : SetAction<RestrictedNaturalSetAction,RestrictedNaturalSetAction::value_type,RestrictedNaturalSetAction::domain_type>( G, D[0].size() ) {
+RestrictedNaturalSetAction::RestrictedNaturalSetAction( Group G, const domain_type& D ) : SetAction<RestrictedNaturalSetAction,RestrictedNaturalSetAction::value_type,RestrictedNaturalSetAction::domain_type>( G, D[0].size() ) {
+	Omega = D;
+}
+
+RestrictedNaturalSetAction::RestrictedNaturalSetAction( Group G, domain_type&& D ) : SetAction<RestrictedNaturalSetAction,RestrictedNaturalSetAction::value_type,RestrictedNaturalSetAction::domain_type>( G, D[0].size() ) {
 	Omega = std::move( D );
 }
 

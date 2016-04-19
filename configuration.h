@@ -16,13 +16,17 @@ class RelationalStructure {
 	std::vector<std::set<std::vector<int>>> _relations;
 
 	size_t c( const std::vector<int>& t ) const;
-	void refine();
+	void refine( bool print );
 public:
 	size_t domainSize() const;
 	size_t arity() const;
+	bool isBinary() const;
+	bool isUniprimitive() const;
+	bool isHomogeneous() const;
+	bool isPrimitive() const;
 	void individualize( std::vector<int> );
 	RelationalStructure skeletalSubstructure( int t, std::vector<int> Delta ) const;
-	void WeisfellerLeman();
+	void WeisfellerLeman( bool print = false );
 	const std::vector<std::set<std::vector<int>>>& relations() const;
 	RelationalStructure( std::vector<std::set<std::vector<int>>> relations, int n );
 	RelationalStructure( const Graph& G, int k );
@@ -56,6 +60,8 @@ public:
 	const ColoredPartition& coloring() const;
 	bool vertex( int i ) const;
 };
+
+
 
 class JohnsonScheme {
 

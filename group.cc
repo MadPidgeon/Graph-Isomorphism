@@ -29,6 +29,11 @@ std::vector<int> _Group::domain() const {
 	return d;
 }
 
+Group _Group::stabilizer( int x ) const {
+	return Group( new Subgroup( share(), [x]( const Permutation& sigma ) { return sigma(x) == x; } ) );
+}
+
+
 Group _Group::share() const {
 	return shared_from_this();
 }

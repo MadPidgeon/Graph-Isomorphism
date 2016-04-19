@@ -3,6 +3,7 @@
 #include <set>
 #include <map>
 #include "ext.h"
+#include "unionfind.h"
 #include "permutation.h"
 
 size_t RelationalStructure::c( const std::vector<int>& t ) const {
@@ -20,16 +21,16 @@ size_t RelationalStructure::arity() const {
 	return _dimension;
 }
 
-void RelationalStructure::WeisfellerLeman() {
+void RelationalStructure::WeisfellerLeman( bool print ) {
 	size_t relation_count;
 	do {
 		relation_count = _relations.size();
-		refine();
+		refine( print );
 		std::cerr << "+";
 	} while( relation_count != _relations.size() );
 }
 
-void RelationalStructure::refine() {
+void RelationalStructure::refine( bool print ) {
 	int n = _n;
 	int r = _relations.size();
 	int k = _dimension;
@@ -58,10 +59,14 @@ void RelationalStructure::refine() {
 				}
 				number += add;
 			}
-			if( number )
-				color.emplace_back( number );
+			/*if( number )
+				color.emplace_back( number );*/
+			color.emplace_back( number );
 		}
-		std::sort( color.begin()+1, color.end() );
+		//std::sort( color.begin()+1, color.end() );
+		if( print ) {
+			std::cout << relation << ": " << color << std::endl;
+		}
 		auto f = color_to_index.find( color );
 		int new_color;
 		if( f == color_to_index.end() ) {
@@ -122,6 +127,32 @@ RelationalStructure::RelationalStructure( const Graph& G, int k ) {
 	}
 }
 
+bool RelationalStructure::isBinary() const {
+	return arity() == 2;
+}
+
+bool RelationalStructure::isUniprimitive() const {
+	return isBinary() and relations().size() > 2 and isPrimitive();
+}
+
+bool RelationalStructure::isHomogeneous() const {
+	return relations()[0].size() == domainSize();
+}
+
+bool RelationalStructure::isPrimitive() const {
+	if( not isBinary() )
+		return false;
+	for( int i = 1; i < relations().size(); i++ ) {
+		const auto& R = relations()[i];
+		UnionFind uf(domainSize());
+		for( const auto& r : R )
+			uf.cup( r[0], r[1] );
+		if( not uf.isUniform() )
+			return false;
+	}
+	return true;
+}
+
 const std::vector<std::set<std::vector<int>>>& RelationalStructure::relations() const {
 	return _relations;
 }
@@ -132,7 +163,7 @@ void RelationalStructure::individualize( std::vector<int> S ) {
 		int color = c( x );
 		if( _relations[color].size() != 1 ) {
 			_relations[color].erase( x );
-			_relations.emplace_back( std::move( std::set<std::vector<int>>({ x }) ) );
+			_relations.emplace( _relations.begin()+color+1, std::move( std::set<std::vector<int>>({ x }) ) );
 		}
 	}
 }
@@ -349,11 +380,11 @@ Either<ColoredPartition,JohnsonScheme> bipartiteSplitOrJohnson( const BipartiteG
 	// 2.
 	if( n2 <= n1 ) {
 		#warning "Split or Johnson requires quasipolynomial funtion"
-		for( auto& perm : all_permutations( n2 ) ) {
+		/*for( auto& perm : all_permutations( n2 ) ) {
 			// individualize
 			// apply vertex refinement
 			// recurse
-		}
+		}*/
 		// return ColoredPartition();
 	}
 	// 3.
