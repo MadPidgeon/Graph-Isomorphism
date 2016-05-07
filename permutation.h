@@ -5,6 +5,7 @@
 #include <initializer_list>
 #include <set>
 #include <exception>
+#include <deque>
 
 class all_permutations;
 
@@ -29,6 +30,7 @@ public:
 	Permutation& operator^=( int );
 	Permutation operator^( int ) const;
 	Permutation inverse() const;
+	Permutation project( const std::vector<int>& Delta ) const;
 	int operator()( int ) const;
 	Permutation( int n );
 	Permutation( std::vector<int>&& );

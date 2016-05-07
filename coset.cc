@@ -1,4 +1,5 @@
 #include <stdexcept>
+#include <iostream>
 #include "coset.h"
 #include "group.h"
 #include "permutation.h"
@@ -39,4 +40,27 @@ std::ostream& operator<<( std::ostream& os, const Coset& c ) {
 		return os << c.subgroup()->generators() << c.representative();
 	else
 		return os << c.representative() << c.subgroup()->generators();
+}
+
+
+bool Iso::isEmpty() const {
+	return isSecond();
+}
+
+const Coset& Iso::coset() const {
+	return getFirst();
+}
+
+Coset operator*( const Permutation& sigma, const Coset& tauH ) {
+	// std::cout << tauH << std::endl;
+	assert( not tauH.isRightCoset() );
+	Permutation sigmatau = sigma * tauH.representative();
+	return Coset( tauH.supergroup(), tauH.subgroup(), sigmatau, false );
+}
+
+Iso operator*( const Permutation& sigma, const Iso& tauH ) {
+	if( tauH.isEmpty() )
+		return tauH;
+	else
+		return sigma * tauH.coset();
 }

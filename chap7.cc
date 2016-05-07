@@ -247,9 +247,97 @@ rtype UPCCCase( ColouredBipartiteGraph G, double alpha, RelationalStructure X, R
 	std::cout << "UPCCCase(" << alpha << ")" << std::endl;
 }
 
+rtype JohnsonCase( JohnsonScheme J, ColouredBipartiteGraph G ) {
+	range Gamma = J.parent_set();
+	int m = Gamma.size();
+	int n1 = G.vertices(ColouredBipartiteGraph::LEFT).size();
+	int n2 = G.vertices(ColouredBipartiteGraph::RIGHT).size();
+	int n = J.size();
+	int l = std::max( log2( n1 ) * log2( n1 ), log2( n2 ) * log2( n2 ) * log2( n2 ) / log2( log2( n2 ) ) );
+	auto CM = J.completeMapping();
+	UnionFind uf( n );
+	std::map<std::vector<int>,int> E;
+	size_t i = 0;
+	size_t c = 0;
+	for( const auto& U : all_ordered_tuples( n, l ) ) {
+		if( uf.find( i ) == i ) {
+			E[U] = c;
+			ColouredBipartiteGraph GU = G.substructure( G.vertices( ColouredBipartiteGraph::LEFT ), CM[ U ] );
+			size_t j = 0;
+			for( const auto& V : all_ordered_tuples( n, l ) ) { // TO DO: remove lower triangle
+				if( j > i and uf.find( j ) == j ) { // isomorphism between i and j has not yet been checked
+					ColouredBipartiteGraph GV = G.substructure( G.vertices( ColouredBipartiteGraph::LEFT ), CM[ V ] );
+					if( GU.isIsomorphic( GV ) ) {
+						uf.cup( i, j );
+						E[ V ] = c;
+					}
+				}
+				j++;
+			}
+			c++;
+		}
+		i++;
+	}
+
+	auto classes = uf.partitioning();
+	if( classes.size() > 1 ) { // case A
+		Hypergraph K( (std::deque<int>) Gamma, E );
+		auto T = K.twins();
+		int t = largest( T );
+		if( T[t].size() * 4 > 3 * m ) { // case A1
+			// case 1
+		} else {
+			RelationalStructure S = K.relationalStructure( T );
+			// case 2
+		}
+	} else { // case B
+		
+	}
+
+}
+
+rtype BlockJohnsonCase() {
+
+}
+
 rtype BlockDesignCase( ColouredBipartiteGraph G, double alpha, RelationalStructure X, RelationalStructure X1, RelationalStructure X2 ) {
 	std::cout << "BlockDesignCase(" << alpha << ")" << std::endl;
-	
+	Hypergraph H = G.neighborhoodHypergraph();
+	int d = H.uniformityDegree();
+	const auto& V1 = G.vertices( ColouredBipartiteGraph::LEFT );
+	const auto& V2 = G.vertices( ColouredBipartiteGraph::RIGHT );
+	int n1 = V1.size();
+	int n2 = V2.size();
+	// case 1
+	if( d > 0 ) {
+		// Johnson scheme
+		BlockJohnsonCase();
+		return rtype;
+	}
+	auto T = H.twins();
+	int k = -1;
+	for( int i : range( 0, T.size() ) ) {
+		if( T[i].size() >= n2/2 ) {
+			k = i;
+			break;
+		}
+	}
+	// case 2
+	if( k != -1 ) {
+		int r = reducePart2byColour( G, .5, T[k] );
+		std::deque<int> C;
+		if( r == 0 ) {
+			C = std::move( T[k] ); // be warned
+		else
+			std::set_difference( V2.begin(), V2.end(), T[k].begin(), T[k].end(), std::back_inserter( C ) );
+		ColouredBipartiteGraph Y = G.substructure( V1, C );
+		return Head( Y, alpha, X, X1, X2 ); // ahhhhhhhhhhhhh
+	}
+	// case 3
+	if( d <= 2.333333333333333333333333333333333333333 * log2( double(n1) ) ) {
+		DesignLemma( magic );
+	}
+
 }
 
 rtype ImprimitiveCase( UnionFind witness, ColouredBipartiteGraph G, double alpha, RelationalStructure X, RelationalStructure X1, RelationalStructure X2 ) {

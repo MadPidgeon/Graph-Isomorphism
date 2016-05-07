@@ -30,6 +30,16 @@ int Permutation::order() const {
 	return _order;
 }
 
+Permutation Permutation::project( const std::vector<int>& Delta ) const {
+	std::vector<int> mapping( degree(), -1 );
+	for( size_t i = 0; i < Delta.size(); ++i )
+		mapping[ Delta[i] ] = i;
+	std::vector<int> perm( Delta.size() );
+	for( size_t i = 0; i < Delta.size(); ++i )
+		perm[i] = mapping[ (*this)( Delta[i] ) ];
+	return Permutation( std::move( perm ) );
+}
+
 bool Permutation::operator<( const Permutation& other ) const {
 	if( degree() != other.degree() )
 		throw std::range_error( "Permutations not compatible" );

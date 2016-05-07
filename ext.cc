@@ -51,6 +51,13 @@ range::iterator range::end() {
 	return iterator( _m ); 
 }
 
+range::operator std::deque<int>() const {
+	std::deque<int> S( _n );
+	std::iota( S.begin(), S.end(), 0 );
+	return S;
+}
+
+
 range::range( int n, int m ) : _n(n), _m(m) {}
 
 all_tuples::iterator::iterator( int n, int r ) : _n(n), _r(r), _tuple( _r, 0 ) {
@@ -101,11 +108,11 @@ bool all_tuples::iterator::operator!=(const self_type& rhs) {
 	return _n != rhs._n || _tuple != rhs._tuple; 
 }
 
-all_tuples::iterator all_tuples::begin() { 
+all_tuples::iterator all_tuples::begin() const { 
 	return iterator( _n, _r ); 
 }
 
-all_tuples::iterator all_tuples::end() { 
+all_tuples::iterator all_tuples::end() const { 
 	return iterator( -1, _r ); 
 }
 
@@ -163,11 +170,11 @@ bool all_ordered_tuples::iterator::operator!=(const self_type& rhs) {
 	return _n != rhs._n || ( _n != -1 && _tuple != rhs._tuple ); 
 }
 
-all_ordered_tuples::iterator all_ordered_tuples::begin() { 
+all_ordered_tuples::iterator all_ordered_tuples::begin() const { 
 	return iterator( _n, _r ); 
 }
 
-all_ordered_tuples::iterator all_ordered_tuples::end() { 
+all_ordered_tuples::iterator all_ordered_tuples::end() const { 
 	return iterator( -1, _r ); 
 }
 
@@ -175,6 +182,9 @@ size_t all_ordered_tuples::size() const {
 	return binom( _n, _r );
 }
 
+range all_ordered_tuples::parent_set() const {
+	return range( 0, _n );
+}
 
 all_ordered_tuples::all_ordered_tuples( int n, int r ) : _n(n), _r(r) {}
 

@@ -17,7 +17,7 @@ class UnionFind {
 	UnionFind( const UnionFind& );
 };
 
-template<typename T> T partitioning() const {
+template<typename T> T UnionFind::partitioning() const {
 	T P;
 	std::vector<int> invs( N );
 	for( int i = 0; i < N; i++ ) {

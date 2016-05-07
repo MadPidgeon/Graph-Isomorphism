@@ -6,6 +6,7 @@
 #include "group.h"
 #include "permutation.h"
 #include "action.h"
+#include "fhl.h"
 
 Permutation _Group::one() const {
 	int n = degree();
@@ -33,7 +34,6 @@ Group _Group::stabilizer( int x ) const {
 	return Group( new Subgroup( share(), [x]( const Permutation& sigma ) { return sigma(x) == x; } ) );
 }
 
-
 Group _Group::share() const {
 	return shared_from_this();
 }
@@ -44,11 +44,11 @@ _Group::~_Group() {
 bool Subgroup::contains( const Permutation& alpha ) const {
 	#warning ("Using membership testing")
 	if( !_fhl )
-		_fhl.create( this );
+		_fhl.create( generators(), degree() );
 	return _fhl.contains( alpha );
 }
 
-bool _Group::_filter( Permutation alpha, std::vector<std::set<Permutation>>& reps, std::function<bool(Permutation)> c ) {
+/*bool _Group::_filter( Permutation alpha, std::vector<std::set<Permutation>>& reps, std::function<bool(Permutation)> c ) {
 	for( size_t i = 0; i < reps.size(); i++ ) {
 		bool found = false;
 		for( const auto& sigma : reps[i] ) {
@@ -78,7 +78,7 @@ bool _Group::_filter( Permutation alpha, std::vector<std::set<Permutation>>& rep
 		}
 	}
 	return false;
-}
+}*/
 
 
 Subgroup::Subgroup( Group G, std::vector<Permutation> gens ) {
@@ -89,8 +89,8 @@ Subgroup::Subgroup( Group G, std::vector<Permutation> gens ) {
 	swap( _generators, gens );
 }
 
-Subgroup::Subgroup( Group G, std::function<bool(Permutation)> c ) {
-	swap( _supergroup, G );
+Subgroup::Subgroup( Group G, std::function<bool(Permutation)> c ) : Subgroup( SubgroupGenerator( G, c ).subgroup() ) {
+	/*swap( _supergroup, G );
 	int n = supergroup()->domain().size();
 	std::vector<std::set<Permutation>> reps( n );
 	for( auto& rep : reps )
@@ -106,11 +106,11 @@ Subgroup::Subgroup( Group G, std::function<bool(Permutation)> c ) {
 			for( int j = 0; j <= i; j++ )
 				for( const auto& a : reps[i] ) // filter will not add to i or j, so no invalidation 
 					for( const auto& b : reps[j] ) {
-						/*std::cout << a << "~" << b << std::endl;
+						std::cout << a << "~" << b << std::endl;
 						for( int q = 0; q < reps.size(); q++ )
-							std::cout << "Q" << q << ": " << reps[q] << std::endl;*/
-						/*if( (q++) % 10000 == 0 )
-							std::cout << reps[0].size() << std::endl;*/
+							std::cout << "Q" << q << ": " << reps[q] << std::endl;
+						if( (q++) % 10000 == 0 )
+							std::cout << reps[0].size() << std::endl;
 						change |= _filter( a*b, reps, c );
 					}
 	}
@@ -119,11 +119,11 @@ Subgroup::Subgroup( Group G, std::function<bool(Permutation)> c ) {
 		for( const auto& sigma : reps[i] )
 			if( sigma != supergroup()->one() )
 				_generators.emplace_back( sigma );
-	}
+	}*/
 }
 
 std::vector<Coset> _Group::allCosets( Group N, bool right ) const {
-	int n = domain().size();
+	/*int n = domain().size();
 	std::vector<std::set<Permutation>> reps( n );
 	std::function<bool(const Permutation&)> c = std::bind( &_Group::contains, N.get(), std::placeholders::_1 );
 	for( auto& rep : reps )
@@ -143,7 +143,31 @@ std::vector<Coset> _Group::allCosets( Group N, bool right ) const {
 	cosets.reserve( reps[0].size() );
 	for( const auto& x : reps[0] )
 		cosets.emplace_back( share(), N,  x, right );
-	return cosets;
+	return cosets;*/
+
+	//std::cerr << "xi" ; 
+
+	//std::cerr << N->generators() << std::endl;
+	//std::cerr << N->order() << std::endl;
+
+	//std::cerr << "weee" ; 
+	SubgroupGenerator sg( share(), [&]( const Permutation& p ) -> bool { return N->contains( p ); } );
+	//std::cerr << "weee" ; 
+
+	const auto& R = sg.cosetRepresentatives();
+	std::vector<Coset> cs;
+	cs.reserve( R.size() );
+	//std::cerr << "weee" ; 
+
+	for( Permutation sigma : R )
+		cs.emplace_back( share(), N, sigma, false ); // fuuuuuuuuuuuuu- direction is wrongish
+	return cs;
+}
+
+bool Subgroup::isGiant() const {
+	if( not _fhl )
+		_fhl.create( generators(), degree() );
+	return _fhl.isGiant();
 }
 
 Subgroup::~Subgroup() {
@@ -163,8 +187,18 @@ int Subgroup::degree() const {
 
 int Subgroup::order() const {
 	if( !_fhl )
-		_fhl.create( this );
+		_fhl.create( generators(), degree() );
 	return _fhl.order();
+}
+
+Group Subgroup::join( std::deque<Permutation>&& P ) const {
+	std::vector<Permutation> new_generators;
+	new_generators.reserve( generators().size() + P.size() );
+	new_generators.insert( new_generators.end(), _generators.cbegin(), _generators.cend() );
+	for( int i = P.size() - 1; i >= 0; --i )
+		if( true /* supergroup().contains( p ) */ ) // safeties off
+			new_generators.push_back( std::move( P[i] ) );
+	return Group( new Subgroup( supergroup(), new_generators ) );
 }
 
 bool SymmetricGroup::contains( const Permutation& sigma ) const {
@@ -177,6 +211,13 @@ int SymmetricGroup::degree() const {
 
 int SymmetricGroup::order() const {
 	return std::tgamma( _degree + 1 );
+}
+
+Group SymmetricGroup::join( std::deque<Permutation>&& P ) const {
+	for( const Permutation& sigma : P )
+		if( not contains( sigma ) )
+			throw;
+	return share();
 }
 
 std::vector<Permutation> SymmetricGroup::generators() const {
@@ -201,7 +242,11 @@ SymmetricGroup::SymmetricGroup( int n ) {
 SymmetricGroup::~SymmetricGroup() {
 }
 
-void FurstHopcroftLuks::create( const _Group* group ) {
+bool SymmetricGroup::isGiant() const {
+	return true;
+}
+
+/*void FurstHopcroftLuks::create( const _Group* group ) {
 	if( _G || !group )
 		throw std::runtime_error( "FHL structure already created" );
 	_G = group;
@@ -214,15 +259,15 @@ void FurstHopcroftLuks::create( const _Group* group ) {
 	bool change = true;
 	while( change ) {
 		change = false;
-		/*for( auto& rep : _reps ) {
+		for( auto& rep : _reps ) {
 			std::cout << "-----" << std::endl;
 			for( auto& sigma : rep )
 				std::cout << sigma.getCycleNotation() << std::endl;
 		}
-		std::cin.get();*/
-		/*int q = 0;
+		std::cin.get();
+		int q = 0;
 		for( const auto& rep: _reps )
-			std::cout << (q++) << ": " << rep << std::endl;*/
+			std::cout << (q++) << ": " << rep << std::endl;
 
 		for( int i = 0; i < _n; i++ )
 			for( int j = 0; j <= i; j++ )
@@ -230,6 +275,15 @@ void FurstHopcroftLuks::create( const _Group* group ) {
 					for( auto b : _reps[j] )
 						change |= filter( a*b );
 	}
+}*/
+
+/*bool FurstHopcroftLuks::isGiant() const {
+	for( size_t i = 0; i < _n - 1; ++i ) {
+		//std::cout << _reps[i].size() << _n << std::endl;
+		if( _reps[i].size() != (_n-i+1) )
+			return false;
+	}
+	return true;
 }
 
 void FurstHopcroftLuks::create( const std::deque<Permutation>& L ) {
@@ -242,6 +296,7 @@ void FurstHopcroftLuks::create( const std::deque<Permutation>& L ) {
 	for( const auto& sigma : L )
 		filter( sigma );
 	_G = new Subgroup( Group( new SymmetricGroup( _n ) ), generators() );
+	std::cerr << "BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD" << std::endl;
 }
 
 bool FurstHopcroftLuks::filter( Permutation alpha, bool add ) {
@@ -298,4 +353,4 @@ int FurstHopcroftLuks::order() const {
 
 FurstHopcroftLuks::operator bool() const {
 	return _G;
-}
+}*/

@@ -209,8 +209,8 @@ public:
 		bool operator==(const self_type& rhs);
 		bool operator!=(const self_type& rhs);
 	};
-	iterator begin();
-	iterator end();
+	iterator begin() const;
+	iterator end() const;
 	size_t size() const;
 	all_tuples( int n, int r );
 };
@@ -242,6 +242,7 @@ public:
 	iterator end();
 	size_t size() const;
 	range( int n, int m );
+	explicit operator std::deque<int>() const;
 };
 
 template<int _r>
@@ -367,8 +368,9 @@ public:
 		bool operator==(const self_type& rhs);
 		bool operator!=(const self_type& rhs);
 	};
-	iterator begin();
-	iterator end();
+	iterator begin() const;
+	iterator end() const;
+	range parent_set() const;
 	size_t size() const;
 	all_ordered_tuples( int n, int r );
 };
@@ -490,4 +492,49 @@ public:
 	}
 };
 
+template<typename T>
+size_t largest( const T& S ) {
+	size_t r = 0, i = 0, m = 0, t;
+	for( const auto& s : S ) {
+		t = s.size();
+		if( t > m ) {
+			r = i;
+			m = t;
+		}
+		++i;
+	}
+	return r;
+}
+
 std::vector<int> bipartiteMatching( const matrix<bool>& M );
+
+template<typename T>
+std::deque<T> split( const T& S, size_t k ) {
+	size_t n = S.size();
+	size_t p = n % k;
+	size_t q = n / k;
+	T U;
+	std::deque<T> V;
+	auto i = S.cbegin();
+	for( size_t j = 0; j < k; ++j ) {
+		for( size_t h = 0; h < q; ++h )
+			U.push_back( *(i++) );
+		if( j < p )
+			U.push_back( *(i++) );
+		V.push_back( std::move( U ) );
+	}
+	return V;
+}
+
+template<typename T>
+size_t intersection_size( const T& a, const T& b ) {
+	auto i = b.cbegin();
+	size_t r = 0;
+	for( int x : a ) {
+		while( (*i) < x )
+			++i;
+		if( (*i) == x )
+			++r;
+	}
+	return r;
+}

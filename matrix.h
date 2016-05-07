@@ -86,7 +86,7 @@ matrix<T>::matrix( std::initializer_list<std::initializer_list<T>> list ) {
 	}
 	w = list.begin()->size();
 	for( auto& row : list ) {
-		if( w != row.size() )
+		if( size_t(w) != row.size() )
 			throw std::out_of_range( "Irregular matrix width" );
 	}
 	resize( h, w );

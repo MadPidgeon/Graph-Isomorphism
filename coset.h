@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <cassert>
 
 class Coset;
 
@@ -22,5 +23,12 @@ public:
 };
 
 std::ostream& operator<<( std::ostream& os, const Coset& c );
+Coset operator*( const Permutation& sigma, const Coset& tauH );
 
-typedef Either<Coset,Empty> Iso;
+struct Iso : public Either<Coset,Empty> {
+	bool isEmpty() const;
+	const Coset& coset() const;
+	using Either::Either;
+};
+
+Iso operator*( const Permutation& sigma, const Iso& tauH );

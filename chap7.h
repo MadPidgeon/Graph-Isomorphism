@@ -25,6 +25,8 @@ int reducePart2byColour( const ColouredBipartiteGraph& X, double alpha, std::deq
 
 rtype bipartiteSplitOrJohnson( ColouredBipartiteGraph G, double alpha );
 
+rtype Head( ColouredBipartiteGraph G, double alpha, RelationalStructure X, RelationalStructure X1, RelationalStructure X2 );
+
 rtype UPCCCase( ColouredBipartiteGraph G, double alpha, RelationalStructure X, RelationalStructure X1, RelationalStructure X2 );
 rtype BlockDesignCase( ColouredBipartiteGraph G, double alpha, RelationalStructure X, RelationalStructure X1, RelationalStructure X2 );
-rtype ImprimitiveCase( ColouredBipartiteGraph G, double alpha, RelationalStructure X, RelationalStructure X1, RelationalStructure X2 );
+rtype ImprimitiveCase( UnionFind witness, ColouredBipartiteGraph G, double alpha, RelationalStructure X, RelationalStructure X1, RelationalStructure X2 );

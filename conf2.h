@@ -3,6 +3,7 @@
 #include <deque>
 #include <unordered_map>
 #include "ext.h"
+#include "unionfind.h"
 
 typedef std::deque<std::deque<int>> regular_mapping_t;
 typedef std::unordered_map<int,int> inverse_mapping_t;
@@ -41,11 +42,11 @@ public:
 
 class Hypergraph {
 	std::deque<int> Omega;
-	std::set<std::vector<int>> E;
+	std::map<std::vector<int>,int> E; // edge colouring
 public:
 	int uniformityDegree() const;
-	Hypergraph( std::deque<int> vertices, std::set<std::vector<int>> edges );
-	Hypergraph( std::set<std::vector<int>> edges );
+	Hypergraph( std::deque<int> vertices, std::map<std::vector<int>,int> edges );
+	Hypergraph( std::map<std::vector<int>,int> edges );
 private:
 	void gatherVertices();
 };
@@ -105,7 +106,7 @@ public:
 	Relation relation( size_t i ) const;
 	bool isHomogeneous() const;
 	bool isPrimitive() const;
-	int witnessOfImprimitivity() const;
+	std::pair<int,UnionFind> witnessOfImprimitivity() const;
 	bool isClique() const;
 	bool isUPCC() const;
 	template<typename T> void individualise( T S );
@@ -114,7 +115,8 @@ public:
 	ColouredBipartiteGraph inducedBipartiteGraph( std::deque<int>&& V1, std::deque<int>&& V2, int r ) const;
 	RelationalStructure( const ColouredBipartiteGraph& G );
 	explicit operator ColouredSet() const;
-	void refine();
+	int refine();
+	RelationalStructure skeleton( size_t t ) const;
 	RelationalStructure skeletalSubstructure( size_t t, std::deque<int> C ) const;
 	std::deque<std::deque<int>> twins( int i ) const;
 	int getNonAlphaPartition( double alpha );
@@ -126,6 +128,13 @@ private:
 	int decode( int y ) const;
 	int& c_vertexColour( int x );
 	bool WeisfeilerLehman();
+};
+
+struct JohnsonScheme : all_tuples {
+	std::deque<int> mapping; // the n-th subset of Gamma as measured by all_ordered_tuples mapping to V2
+	std::map<int,int> inverse_mapping; // the elements of V2 mapping to the n-th subset of Gamma
+	JohnsonScheme( int m, int t );
+	std::map<std::vector<int>,int> completeMapping() const;
 };
 
 std::ostream& operator<<( std::ostream& os, const ColouredBipartiteGraph& G );

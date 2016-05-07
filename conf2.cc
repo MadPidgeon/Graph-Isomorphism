@@ -76,27 +76,27 @@ const std::deque<regular_mapping_t>& ColouredPartition::getMapping() const {
 // Hypergraph
 
 int Hypergraph::uniformityDegree() const {
-	int d = E.begin()->size();
+	size_t d = E.begin()->first.size();
 	for( const auto& e : E )
-		if( e.size() != d )
+		if( e.first.size() != d )
 			return -1;
 	return d;
 }
 
-Hypergraph::Hypergraph( std::deque<int> vertices, std::set<std::vector<int>> edges ) {
+Hypergraph::Hypergraph( std::deque<int> vertices, std::map<std::vector<int>,int> edges ) {
 	Omega = std::move( vertices );
 	E = std::move( edges );
 }
 
-Hypergraph::Hypergraph( std::set<std::vector<int>> edges ) {
+Hypergraph::Hypergraph( std::map<std::vector<int>,int> edges ) {
 	E = std::move( edges );
 	gatherVertices();
 }
 
 void Hypergraph::gatherVertices() {
 	std::set<int> S;
-	for( int e : E )
-		for( int x : e )
+	for( auto& e : E )
+		for( int x : e.first )
 			S.insert( x );
 	for( int x : S )
 		Omega.push_back( x );
@@ -231,14 +231,14 @@ ColouredBipartiteGraph::side ColouredBipartiteGraph::getSide( int x ) const {
 }
 
 Hypergraph ColouredBipartiteGraph::neighborhoodHypergraph() const {
-	std::set<std::vector<int>> E;
-	for( int x : nbh[0] ) {
+	std::map<std::vector<int>,int> E;
+	for( int x : range(0, Omega[0].size() ) ) {
 		std::vector<int> e;
 		e.reserve( nbh[0][x].size() );
 		for( int p : nbh[0][x] )
-			e.push_back( decode( p ) );
+			e.push_back( decode( RIGHT, p ) );
 		std::sort( e.begin(), e.end() );
-		E.insert( std::move( e ) );
+		E.emplace( std::move( e ), 0 ); // perhaps a better colouring
 	}
 	return Hypergraph( Omega[1], E );
 }
@@ -285,7 +285,7 @@ bool RelationalStructure::isPrimitive() const {
 	return witnessOfImprimitivity().first == 0;
 }
 
-std::pair<int,UnionFind> RelationalStructure::witnessOfImprimitivity() {
+std::pair<int,UnionFind> RelationalStructure::witnessOfImprimitivity() const {
 	if( arity() != 2 )
 		throw;
 	if( not isHomogeneous() )
@@ -404,8 +404,10 @@ RelationalStructure::operator ColouredSet() const {
 	return ColouredSet( std::move( S ) );
 }
 
-void RelationalStructure::refine() {
-	while( WeisfeilerLehman() ) std::cout << "+";
+int RelationalStructure::refine() {
+	int i = 0;
+	while( WeisfeilerLehman() ) i++;
+	return i;
 }
 
 RelationalStructure RelationalStructure::skeletalSubstructure( size_t t, std::deque<int> C ) const {
@@ -425,6 +427,10 @@ RelationalStructure RelationalStructure::skeletalSubstructure( size_t t, std::de
 	for( int& x : r2 )
 		x = used_cols[x];
 	return RelationalStructure( std::move( C ), std::move( r2 ), t );
+}
+
+RelationalStructure RelationalStructure::skeleton( size_t t ) const {
+	return skeletalSubstructure( t, Omega );
 }
 
 std::deque<std::deque<int>> RelationalStructure::twins( int i ) const {
@@ -606,6 +612,19 @@ std::ostream& operator<<( std::ostream& os, const RelationalStructure& X ) {
 	os << ")";
 	return os;
 }
+
+JohnsonScheme::JohnsonScheme( int m, int t ) : all_tuples( m, t ) {
+}
+
+std::map<std::vector<int>,int> JohnsonScheme::completeMapping() const {
+	size_t i = 0;
+	std::map<std::vector<int>,int> r;
+	for( const auto& S : *this )
+		r[ S ] = mapping[ i++ ];
+	return r;
+}
+
+
 
 /*ColouredBipartiteGraph inducedBipartiteGraph( std::deque<int>&& V1, std::deque<int>&& V2, int r ) const {
 	typedef ColouredBipartiteGraph::side side;
