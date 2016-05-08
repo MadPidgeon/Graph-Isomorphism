@@ -52,7 +52,7 @@ Iso StringIsomorphismTransitive( Group G, string x, string y ) {
 	auto H = A.anonymize();
 	std::cout << B << std::endl;
 	// checkkkkkk (2(log(n))^2)^(2*(log(n))^2)*(log(n)!) <= exp(4*log(n)*log(n)*log(log(n)))
-	std::cout << H->order() << "  " << std::pow( m, 1 + log2( m ) ) << std::endl;
+	std::cout << double( H->order() ) << "  " << std::pow( m, 1 + log2( m ) ) << std::endl;
 	if( H->order() < std::pow( m, 1 + log2( m ) ) ) { // or H->degree() <= 24
 		auto N = A.kernel();
 		return WeakReduction( G, N, x, y, StringIsomorphism );
@@ -80,11 +80,11 @@ int main() {
 	Group G( new Subgroup( S4, { {1,0,3,2}, {0,2,1,3} } ) );
 	std::cout << StringIsomorphism( G, x, y ) << std::endl;
 	std::cout << "-------------------------------------" << std::endl;
-	Group S5( new SymmetricGroup( 5 ) );
-	NaturalSetAction A( S5, 5, 2 );
-	auto S5_2 = A.anonymize();
-	std::string u = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-	std::string v = "jihgfedcba";
-	std::cout << StringIsomorphism( S5_2, u, v ) << std::endl;
+	Group S24( new SymmetricGroup( 24 ) );
+	NaturalSetAction A( S24, 24, 2 );
+	auto S24_2 = A.anonymize();
+	std::string u = "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab";
+	std::string v = "babababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababa";
+	std::cout << StringIsomorphism( S24_2, u, v ) << std::endl;
 	return 0;
 }

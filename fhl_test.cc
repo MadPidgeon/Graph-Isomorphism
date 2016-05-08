@@ -24,12 +24,20 @@ int main() {
 	NaturalSetAction A( E, n, 2 );
 	Group F = A.anonymize();
 	std::cout << F->generators() << std::endl;
-	FHL<> fhl1( F->generators() );
+	//FHL<> fhl1( F->generators(), binom( 24, 2 ) );
 	// std::cout << fhl1 << std::endl;
+	std::vector<int> d = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22};
+	NaturalSetAction HELP( F, F->degree(), d.size() );
+	Group sub( new Subgroup( F, 
+		[&]( const Permutation& sigma ) -> bool {
+			int is = intersection_size( d, HELP( sigma, d ) );
+			return is == 1 or is == d.size(); 
+		} ) );
+	std::cout << sub->generators() << std::endl;
 	std::cout << "----------------------------------" << std::endl;
 	Group G( new SymmetricGroup( 8 ) );
 	Group H( new Subgroup( G, {{1,2,3,4,5,6,7,0}} ) );
-	FHL<> fhl2( H->generators() );
+	FHL<> fhl2( H->generators(), 8 );
 	std::cout << "----------------------------------" << std::endl;
 	Group I( new SymmetricGroup( 4 ) );
 	std::vector<PermutationPullback> pullbacks;

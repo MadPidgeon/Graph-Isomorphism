@@ -57,7 +57,7 @@ public:
 	bool contains( const T& sigma ) const;
 	T find( const T& sigma ) const;
 	bool isGiant() const;
-	unsigned long long order() const;
+	__int128_t order() const;
 	std::vector<T> listGenerators() const;
 	bool operator!() const;
 };
@@ -169,10 +169,10 @@ bool FHL<T>::isGiant() const {
 }
 
 template<typename T>
-unsigned long long FHL<T>::order() const {
-	unsigned long long r = 1;
+__int128_t FHL<T>::order() const {
+	__int128_t r = 1;
 	for( const auto& W : V ) {
-		unsigned long long s = 1;
+		__int128_t s = 1;
 		for( const auto& sigma : W )
 			if( sigma.degree() != 0 )
 				++s;

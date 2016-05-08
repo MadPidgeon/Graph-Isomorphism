@@ -33,7 +33,7 @@ std::deque<std::vector<int>> CameronIdentificationPart( const std::vector<std::a
 	std::deque<std::vector<int>> D_prime;
 	for( const auto& gamma : Gamma_prime ) {
 		#ifdef DEBUG
-		if( (++counter) % 100 == 0 )
+		if( (++counter) % 2000 == 0 )
 			std::cerr << counter << std::endl;
 		#endif
 		int x = gamma[0];
@@ -56,7 +56,10 @@ std::deque<std::vector<int>> CameronIdentificationPart( const std::vector<std::a
 		setsize = C.size();
 		if( std::find( D_prime.begin(), D_prime.end(), C ) == D_prime.end() )
 			D_prime.emplace_back( std::move( C ) );
+		else
+			C.clear();
 	}
+	std::sort( D_prime.begin(), D_prime.end() );
 	return D_prime;
 }
 
@@ -88,7 +91,7 @@ Iso CameronIdentification( RestrictedNaturalSetAction phi, string x, string y, T
 	const auto& Phi = orbitals.back();
 
 	#ifdef DEBUG
-	std::cerr << Sigma_1 << std::endl << Phi << std::endl;
+	// std::cerr << Sigma_1 << std::endl << Phi << std::endl;
 	#endif
 
 	// turn Phi into a map
@@ -98,16 +101,14 @@ Iso CameronIdentification( RestrictedNaturalSetAction phi, string x, string y, T
 
 	// split Sigma_1
 	std::deque<std::vector<std::array<int,2>>> Gamma = split( Sigma_1, THREADS );
+	// std::cout << Gamma << std::endl;
 
 	// step 3: delegate
 
 	#ifdef THREADED
 	std::future<std::deque<std::vector<int>>> results[THREADS-1];
-	{
-		size_t i = 0;
-		for( auto itr = Gamma.begin()+1; itr != Gamma.end(); ++itr, ++i )
-			results[i] = std::async( CameronIdentificationPart<T>, std::cref( Gamma[i+1] ), std::cref( Delta ), n );
-	}
+	for( size_t i = 1; i < Gamma.size(); ++i )
+		results[i-1] = std::async( std::launch::async, CameronIdentificationPart<T>, std::cref( Gamma[i] ), std::cref( Delta ), n );
 	#endif
 
 	auto primary_result = CameronIdentificationPart<T>( Gamma[0], Delta, n );
@@ -115,16 +116,16 @@ Iso CameronIdentification( RestrictedNaturalSetAction phi, string x, string y, T
 	#ifdef THREADED
 	for( size_t i = 0; i < THREADS-1; ++i ) {
 		auto secondary_result = results[i].get();
-		std::deque<std::vector<int>> intermediate;
-		std::set_union( primary_result.begin(), primary_result.end(), secondary_result.begin(), secondary_result.end(), intermediate.begin() );
-		primary_result = std::move( intermediate );
+		primary_result = join( primary_result, secondary_result );
 	}
 	#endif
+
+	std::cout << primary_result << std::endl;
 
 	// step 4: identify block
 	std::map<int,std::vector<int>> E;
 	const auto d = primary_result[0];
-	size_t i = 1;
+	size_t i = 0;
 	for( const auto& e : primary_result )
 		E[ intersection_size( d, e ) ].push_back( i++ );
 
@@ -135,13 +136,20 @@ Iso CameronIdentification( RestrictedNaturalSetAction phi, string x, string y, T
 		B.push_back( std::move( v ) );
 	}
 
+	//std::cout << "----------------------------------" << std::endl;
+	//std::cout << B << std::endl;
+
 	// step 5: stabilise block
-	NaturalSetAction C( G, G->degree(), primary_result[0].size() );
+	NaturalSetAction C( G, G->degree(), d.size() );
 	Group H( new Subgroup( G, 
-		[&]( const Permutation& sigma ) -> bool { 
-			return intersection_size( d, C( sigma, d ) ) == minimal_intersection_size; 
+		[&]( const Permutation& sigma ) -> bool {
+			int is = intersection_size( d, C( sigma, d ) );
+			return is == minimal_intersection_size or is == d.size(); 
 		} ) );
 	   // sigma stabilises B iff it maps a point from B, here d, to somewhere in B iff d intersects sigma d minimally
+
+	//std::cout << "lolwat" << std::endl;
+	//std::cout << H->generators() << std::endl;
 
 	// step 6:
 	return WeakReduction( G, H, x, y, CameronReduction( phi, std::move( B ) ) );

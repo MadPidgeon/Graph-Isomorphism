@@ -527,6 +527,27 @@ std::deque<T> split( const T& S, size_t k ) {
 }
 
 template<typename T>
+std::deque<T> join( const std::deque<T>& A, const std::deque<T>& B ) {
+	std::deque<T> result;
+	auto i = A.cbegin();
+	for( const auto& y : B ) {
+		if( i != A.cend() ) {
+			while( *i < y ) {
+				result.push_back( *(i++) );
+				if( i == A.cend() )
+					break;
+			}
+			if( i != A.cend() and *i == y )
+				++i;
+		}
+		result.push_back( y );
+	}
+	while( i != A.cend() )
+		result.push_back( *(i++) );
+	return result;
+}
+
+template<typename T>
 size_t intersection_size( const T& a, const T& b ) {
 	auto i = b.cbegin();
 	size_t r = 0;

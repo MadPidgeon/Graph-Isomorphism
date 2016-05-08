@@ -88,23 +88,24 @@ void SubgroupGenerator::create( Group H, const FHL<Permutation>& P ) {
 
 void SubgroupGenerator::subcreate() {
 	auto generators = G->generators();
-	std::cerr << generators << std::endl;
+	//std::cerr << generators << std::endl;
 	if( n > 0 ) {
 		V.resize( m );
-		std::cerr << " a";
+		//std::cerr << " a";
 		for( size_t i = 0; i < m; ++i )
 			V[i].resize( n - i - 1, Permutation( 0 ) );
-		std::cerr << "b";
+		//std::cerr << "b";
 		std::deque<Permutation> new_permutations;
 		for( auto sigma : generators )
 			new_permutations.push_back( filter( sigma, true ) );
-		std::cerr << "c";
+		//std::cerr << "c";
 		// std::cout << new_permutations << std::endl;
 		while( not new_permutations.empty() ) {
-			std::cout << V << representatives << std::endl;
+			// std::cout << V << representatives << std::endl;
 			Permutation sigma = std::move( new_permutations.front() );
 			Permutation mu( 0 );
 			new_permutations.pop_front();
+			try {
 			for( const auto& W : V ) {
 				for( const auto& tau : W ) {
 					if( tau.degree() > 0 ) {
@@ -117,15 +118,20 @@ void SubgroupGenerator::subcreate() {
 							new_permutations.push_back( std::move( mu ) );
 					}
 				}
-				for( const auto& tau : representatives ) {
-					Permutation nu = tau.inverse();
-					mu = filter( sigma * nu, true );
-					if( not mu.isIdentity() )
-						new_permutations.push_back( std::move( mu ) );
-					mu = filter( nu * sigma, true );
-					if( not mu.isIdentity() )
-						new_permutations.push_back( std::move( mu ) );
-				}
+			}
+			for( const auto& tau : representatives ) {
+				Permutation nu = tau.inverse();
+				mu = filter( sigma * nu, true );
+				if( not mu.isIdentity() )
+					new_permutations.push_back( std::move( mu ) );
+				mu = filter( nu * sigma, true );
+				if( not mu.isIdentity() )
+					new_permutations.push_back( std::move( mu ) );
+			}
+			} catch( ... ) {
+				std::cout << sigma << std::endl;
+				std::cerr << representatives << std::endl;
+				std::cerr << (*this) << std::endl;
 			}
 		}
 	}

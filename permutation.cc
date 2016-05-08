@@ -91,8 +91,10 @@ std::vector<std::vector<int>> Permutation::getCycleNotation() const {
 }
 
 Permutation Permutation::operator*( const Permutation& sigma ) const {
-	if( degree() != sigma.degree() )
+	if( degree() != sigma.degree() ) {
+		std::cerr << (*this) << "*" << sigma <<std::endl;
 		throw std::range_error( "Permutations not compatible" );
+	}
 	std::vector<int> v( degree() );
 	for( int i = 0; i < degree(); i++ )
 		v[i] = (*this)(sigma(i));

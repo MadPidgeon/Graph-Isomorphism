@@ -150,7 +150,6 @@ std::vector<Coset> _Group::allCosets( Group N, bool right ) const {
 	//std::cerr << N->generators() << std::endl;
 	//std::cerr << N->order() << std::endl;
 
-	//std::cerr << "weee" ; 
 	SubgroupGenerator sg( share(), [&]( const Permutation& p ) -> bool { return N->contains( p ); } );
 	//std::cerr << "weee" ; 
 
@@ -185,7 +184,7 @@ int Subgroup::degree() const {
 	return supergroup()->degree();
 }
 
-int Subgroup::order() const {
+__int128_t Subgroup::order() const {
 	if( !_fhl )
 		_fhl.create( generators(), degree() );
 	return _fhl.order();
@@ -209,7 +208,7 @@ int SymmetricGroup::degree() const {
 	return _degree;
 }
 
-int SymmetricGroup::order() const {
+__int128_t SymmetricGroup::order() const {
 	return std::tgamma( _degree + 1 );
 }
 

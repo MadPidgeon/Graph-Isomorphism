@@ -18,7 +18,7 @@ class _Group: public std::enable_shared_from_this<const _Group> {
 public:
 	virtual bool contains( const Permutation& ) const = 0;
 	virtual int degree() const = 0;
-	virtual int order() const = 0;
+	virtual __int128_t order() const = 0;
 	virtual std::vector<Permutation> generators() const = 0;
 	virtual Group join( std::deque<Permutation>&& ) const = 0;
 	virtual bool isGiant() const = 0;
@@ -46,7 +46,7 @@ public:
 	void create( const std::deque<Permutation>& L );
 	bool contains( const Permutation& );
 	bool isGiant() const;
-	int order() const;
+	__int128_t order() const;
 	std::vector<Permutation> generators() const;
 	operator bool() const;
 };*/
@@ -59,7 +59,7 @@ public:
 	Group supergroup() const;
 	virtual bool contains( const Permutation& ) const;
 	virtual int degree() const;
-	virtual int order() const;
+	virtual __int128_t order() const;
 	virtual std::vector<Permutation> generators() const;
 	virtual Group join( std::deque<Permutation>&& ) const;
 	virtual bool isGiant() const;
@@ -74,7 +74,7 @@ class SymmetricGroup: public _Group {
 public:
 	virtual bool contains( const Permutation& ) const;
 	virtual int degree() const;
-	virtual int order() const;
+	virtual __int128_t order() const;
 	virtual std::vector<Permutation> generators() const;
 	virtual Group join( std::deque<Permutation>&& ) const;
 	virtual bool isGiant() const;
